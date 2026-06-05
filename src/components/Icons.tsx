@@ -1,4 +1,5 @@
 import React from 'react';
+import crestsMap from '@/src/lib/crests-map.json';
 
 const ICON_PATHS: Record<string, string> = {
   calendar: '<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>',
@@ -128,9 +129,10 @@ interface FlagBadgeProps {
 }
 
 export function FlagBadge({ country, size = 24 }: FlagBadgeProps) {
-  const code = getFlagCode(country);
-  const w = Math.round(size * 4 / 3);
-  if (!code) {
+  const filename = (crestsMap as Record<string, string>)[country];
+  
+  if (!filename) {
+    const w = Math.round(size * 4 / 3);
     return (
       <span 
         className="inline-flex items-center justify-center shrink-0 rounded-[3px] bg-slate-100 border border-slate-200 text-slate-400"
@@ -140,17 +142,18 @@ export function FlagBadge({ country, size = 24 }: FlagBadgeProps) {
       </span>
     );
   }
+
   return (
-    <span
-      className={`fi fi-${code} shrink-0`}
-      style={{ 
-        width: w, 
-        height: size, 
-        borderRadius: 3, 
-        backgroundSize: 'cover', 
-        boxShadow: '0 0 0 1px rgba(16,24,40,0.10)' 
+    <img
+      src={`/crests/${filename}`}
+      alt={country}
+      width={size}
+      height={size}
+      className="shrink-0 object-contain"
+      style={{
+        width: size,
+        height: size,
       }}
-      aria-label={country}
     />
   );
 }
