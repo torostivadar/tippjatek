@@ -4,8 +4,8 @@ import { supabase } from '@/src/lib/supabase';
 import { User } from '@supabase/supabase-js';
 
 interface NavigationProps {
-  activeTab: 'matches' | 'leaderboard' | 'groups';
-  setActiveTab: (tab: 'matches' | 'leaderboard' | 'groups') => void;
+  activeTab: 'matches' | 'leaderboard' | 'groups' | 'rules';
+  setActiveTab: (tab: 'matches' | 'leaderboard' | 'groups' | 'rules') => void;
   user: User | null;
 }
 
@@ -54,6 +54,17 @@ export function Navigation({ activeTab, setActiveTab, user }: NavigationProps) {
         >
           <Icon name="calendar" size={14} strokeWidth={2.4} />
           <span className="hidden sm:inline">Csoportok</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('rules')}
+          className={`px-4 py-2 rounded-xl text-[11px] font-bold uppercase tracking-[0.15em] transition-all duration-200 flex items-center gap-2
+            ${activeTab === 'rules' 
+              ? 'bg-accent text-white shadow-[0_8px_20px_-8px_rgba(124,58,237,0.7)]' 
+              : 'text-mid hover:text-ink hover:bg-wash'}`}
+        >
+          <Icon name="newspaper" size={14} strokeWidth={2.4} />
+          <span className="hidden sm:inline">Játékszabály</span>
         </button>
       </div>
 

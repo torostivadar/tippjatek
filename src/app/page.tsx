@@ -8,6 +8,7 @@ import { MatchDetail } from '@/src/components/MatchDetail';
 import { Leaderboard } from '@/src/components/Leaderboard';
 import { Auth } from '@/src/components/Auth';
 import { Icon } from '@/src/components/Icons';
+import { Rules } from '@/src/components/Rules';
 
 // Full list of 48 teams in the World Cup
 const TEAMS_LIST = [
@@ -262,6 +263,11 @@ export default function Home() {
               Hamarosan! A csoportok aktuális állása és az egyenes kieséses szakasz élő ágrajza a csoportkör meccseinek előrehaladtával itt fog megjelenni dinamikusan.
             </p>
           </div>
+        )}
+
+        {/* 4. RULES TAB */}
+        {activeTab === 'rules' && (
+          <Rules />
         )}
       </main>
     </div>

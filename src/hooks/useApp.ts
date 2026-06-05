@@ -9,7 +9,7 @@ export function useApp() {
   const [matches, setMatches] = useState<Match[]>([]);
   const [predictions, setPredictions] = useState<Prediction[]>([]);
   const [profiles, setProfiles] = useState<Profile[]>([]);
-  const [activeTab, setActiveTab] = useState<'matches' | 'leaderboard' | 'groups'>('matches');
+  const [activeTab, setActiveTab] = useState<'matches' | 'leaderboard' | 'groups' | 'rules'>('matches');
 
   // Load User Auth Session
   useEffect(() => {
