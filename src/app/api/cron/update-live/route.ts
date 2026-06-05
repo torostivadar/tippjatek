@@ -22,44 +22,48 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // 2. Check if we have active/running matches in our database.
-    // A match is active if:
-    // - Its status is not FINISHED
-    // - AND (it is currently LIVE OR it started in the last 12 hours)
-    const now = new Date();
-    const twelveHoursAgo = new Date(now.getTime() - 12 * 60 * 60 * 1000);
-
-    const activeMatches = await db
+    // 2. Fetch all unfinished matches from our database.
+    const unfinishedMatches = await db
       .select()
       .from(matches)
-      .where(
-        and(
-          not(eq(matches.status, 'FINISHED')),
-          or(
-            eq(matches.status, 'LIVE'),
-            and(
-              lte(matches.start_time, now),
-              gte(matches.start_time, twelveHoursAgo)
-            )
-          )
-        )
-      );
+      .where(not(eq(matches.status, 'FINISHED')));
 
-    console.log(`Cron check: found ${activeMatches.length} active/recent matches in the database.`);
+    const now = new Date();
+    
+    // Filter matches that meet the strict target window (célfotó) criteria
+    const matchesToSync = unfinishedMatches.filter(match => {
+      const startMs = new Date(match.start_time).getTime();
+      const minutesSinceStart = (now.getTime() - startMs) / (60 * 1000);
+
+      // Rule 1: Must be at least 105 minutes since kickoff
+      if (minutesSinceStart < 105) {
+        return false;
+      }
+
+      // Rule 2 & 3: If status in DB is LIVE (we already checked at 105 mins and it was in progress/extra time),
+      // we must wait until at least 160 minutes since kickoff.
+      if (match.status === 'LIVE' && minutesSinceStart < 160) {
+        return false;
+      }
+
+      return true;
+    });
+
+    console.log(`Cron check: found ${matchesToSync.length} matches in the active target sync window.`);
 
     // 3. Limit-saving optimization:
-    // If there are no active matches in progress or recently started, exit immediately without calling the external API.
-    if (activeMatches.length === 0) {
-      console.log('No active matches. Skipping external API call to save daily quota.');
+    // If there are no matches in their target sync window, exit immediately without calling the external API.
+    if (matchesToSync.length === 0) {
+      console.log('No matches in target sync window. Skipping external API call.');
       return NextResponse.json({ 
         success: true, 
-        message: 'No active matches. API-Football sync skipped to save quota.' 
+        message: 'No matches in target sync window. API-Football sync skipped to save quota.' 
       });
     }
 
-    // 4. Run the API-Football sync and scoring logic
-    console.log(`Active matches found: [${activeMatches.map(m => `${m.team_a}-${m.team_b} (${m.id})`).join(', ')}]. Syncing with API-Football...`);
-    const result = await syncMatchesAndScore();
+    // 4. Run the API-Football sync for the target matches only
+    console.log(`Matches to sync: [${matchesToSync.map(m => `${m.team_a}-${m.team_b} (${m.id})`).join(', ')}]. Syncing with API-Football...`);
+    const result = await syncMatchesAndScore(matchesToSync.map(m => m.id));
 
     return NextResponse.json({ 
       success: true, 

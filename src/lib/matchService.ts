@@ -109,7 +109,7 @@ export async function fetchApiFixtures() {
 }
 
 // Synchronize database matches with API-Football data
-export async function syncMatchesAndScore() {
+export async function syncMatchesAndScore(targetMatchIds?: string[]) {
   console.log('Starting API-Football sync...');
   const apiFixtures = await fetchApiFixtures();
   console.log(`Fetched ${apiFixtures.length} fixtures from API-Football.`);
@@ -120,9 +120,13 @@ export async function syncMatchesAndScore() {
     .from(matches)
     .where(not(eq(matches.status, 'FINISHED')));
 
+  const matchesToProcess = targetMatchIds
+    ? dbMatches.filter(m => targetMatchIds.includes(m.id))
+    : dbMatches;
+
   let updatedCount = 0;
 
-  for (const dbMatch of dbMatches) {
+  for (const dbMatch of matchesToProcess) {
     // Attempt to find matching fixture from API
     const apiFixture = apiFixtures.find((api: any) => {
       // 1. Match by api_fixture_id if already saved
