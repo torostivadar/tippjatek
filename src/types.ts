@@ -7,6 +7,8 @@ export interface Match {
   start_time: string;
   status: 'NOT_STARTED' | 'LIVE' | 'FINISHED';
   group: string;
+  ai_data?: MatchStats | null;
+  last_ai_updated?: string | null;
 }
 
 export interface Prediction {

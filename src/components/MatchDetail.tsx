@@ -430,21 +430,14 @@ export function MatchDetail({ match, prediction, onSave, favoriteTeam }: MatchDe
     setIsTuti(prediction?.is_tuti ?? false);
     setToast(false);
 
-    // Fetch match stats from Supabase
-    supabase
-      .from('match_details')
-      .select('*')
-      .eq('match_id', match.id)
-      .single()
-      .then(({ data }) => {
-        if (data) {
-          setDbStats(data as unknown as MatchStats);
-        } else {
-          // Fallback to static mock database
-          setDbStats(MOCK_STATS_DATABASE[match.id] || null);
-        }
-      });
-  }, [prediction, match.id]);
+    // Read AI data directly from the match object (cached in matches.ai_data JSONB)
+    if (match.ai_data) {
+      setDbStats(match.ai_data);
+    } else {
+      // Fallback to static mock database for demo/dev
+      setDbStats(MOCK_STATS_DATABASE[match.id] || null);
+    }
+  }, [prediction, match.id, match.ai_data]);
 
   const isFinished = match.status === 'FINISHED';
   const isTBD = 

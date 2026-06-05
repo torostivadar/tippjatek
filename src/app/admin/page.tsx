@@ -33,6 +33,10 @@ export default function AdminPage() {
   
   const [submitting, setSubmitting] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
+  
+  // AI state
+  const [updatingAi, setUpdatingAi] = useState(false);
+  const [aiSuccessMsg, setAiSuccessMsg] = useState('');
 
   // Eliminated teams state
   const [eliminatedTeams, setEliminatedTeams] = useState<string[]>([]);
@@ -134,6 +138,58 @@ export default function AdminPage() {
     setScoreB(m.score_b !== null ? String(m.score_b) : '');
     setStatus(m.status);
     setSuccessMsg('');
+    setAiSuccessMsg('');
+  };
+
+  const handleUpdateAi = async () => {
+    if (!selectedMatch) return;
+    setUpdatingAi(true);
+    setAiSuccessMsg('');
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+
+      if (!token) {
+        alert('Nincs érvényes munkamenet token!');
+        return;
+      }
+
+      const res = await fetch('/api/admin/update-ai', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ matchId: selectedMatch.id })
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Hiba az AI adatok frissítésekor');
+      }
+
+      setAiSuccessMsg('AI elemzés sikeresen frissítve!');
+      
+      // Update local matches list
+      setMatches(prev => prev.map(m => m.id === selectedMatch.id ? {
+        ...m,
+        ai_data: data.ai_data,
+        last_ai_updated: new Date().toISOString()
+      } : m));
+
+      // Update selectedMatch reference
+      setSelectedMatch(prev => prev ? {
+        ...prev,
+        ai_data: data.ai_data,
+        last_ai_updated: new Date().toISOString()
+      } : null);
+
+    } catch (err: any) {
+      console.error(err);
+      alert('AI Hiba: ' + err.message);
+    } finally {
+      setUpdatingAi(false);
+    }
   };
 
   const handleScoreSubmit = async (e: React.FormEvent) => {
@@ -321,6 +377,41 @@ export default function AdminPage() {
                 {successMsg && (
                   <div className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs rounded-xl font-bold">
                     {successMsg}
+                  </div>
+                )}
+
+                {selectedMatch && !(
+                  selectedMatch.team_a.includes('/') ||
+                  selectedMatch.team_a.includes('helyezettje') ||
+                  selectedMatch.team_a.startsWith('W-') ||
+                  selectedMatch.team_a.startsWith('L-')
+                ) && (
+                  <div className="pb-4 border-b border-line space-y-3">
+                    <label className="block text-[10px] font-bold text-faint uppercase tracking-wider">
+                      AI VB-Stúdió Elemzés
+                    </label>
+                    {aiSuccessMsg && (
+                      <div className="p-2.5 bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs rounded-xl font-bold">
+                        {aiSuccessMsg}
+                      </div>
+                    )}
+                    <button
+                      type="button"
+                      onClick={handleUpdateAi}
+                      disabled={updatingAi}
+                      className="w-full py-2.5 rounded-xl border border-accent/30 bg-accent/5 hover:bg-accent/10 text-accent font-bold text-[11px] uppercase tracking-wider flex items-center justify-center gap-2 transition-all disabled:opacity-50 cursor-pointer"
+                    >
+                      {updatingAi ? (
+                        <span className="w-4 h-4 border-2 border-accent/40 border-t-accent rounded-full animate-spin" />
+                      ) : (
+                        <>AI Elemzés Frissítése (Gemini) <Icon name="sparkles" size={12} /></>
+                      )}
+                    </button>
+                    {selectedMatch.last_ai_updated && (
+                      <div className="text-[10px] text-faint text-center">
+                        Utolsó AI frissítés: {new Date(selectedMatch.last_ai_updated).toLocaleString('hu-HU')}
+                      </div>
+                    )}
                   </div>
                 )}
 
