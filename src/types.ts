@@ -29,6 +29,8 @@ export interface Profile {
   correct_outcomes: number;
   favorite_team?: string | null;
   champion_prediction?: string | null;
+  has_transferred: boolean;
+  avatar?: string | null;
 }
 
 export interface MatchStats {

@@ -7,6 +7,19 @@ import { Icon, FlagBadge } from '@/src/components/Icons';
 import { getAbbreviationCode, fmtLong } from '@/src/lib/utils';
 import { User } from '@supabase/supabase-js';
 
+const TEAMS_LIST = [
+  'Algéria', 'Anglia', 'Argentína', 'Ausztrália', 'Ausztria',
+  'Belgium', 'Bosznia-Hercegovina', 'Brazília', 'Csehország', 'Curaçao',
+  'Dél-afrikai Köztársaság', 'Ecuador', 'Egyesült Államok', 'Egyiptom', 'Elefántcsontpart',
+  'Franciaország', 'Ghána', 'Haiti', 'Hollandia', 'Horvátország',
+  'Irak', 'Irán', 'Japán', 'Jordánia', 'Kanada',
+  'Katar', 'Kolumbia', 'Kongói DK', 'Koreai Köztársaság', 'Marokkó',
+  'Mexikó', 'Németország', 'Norvégia', 'Panama', 'Paraguay',
+  'Portugália', 'Skócia', 'Spanyolország', 'Svájc', 'Szaúd-Arábia',
+  'Szenegál', 'Svédország', 'Tunézia', 'Törökország', 'Új-Zéland',
+  'Uruguay', 'Üzbegisztán', 'Zöld-foki Köztársaság'
+].sort((a, b) => a.localeCompare(b, 'hu'));
+
 export default function AdminPage() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
@@ -20,6 +33,11 @@ export default function AdminPage() {
   
   const [submitting, setSubmitting] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
+
+  // Eliminated teams state
+  const [eliminatedTeams, setEliminatedTeams] = useState<string[]>([]);
+  const [teamToEliminate, setTeamToEliminate] = useState('');
+  const [loadingEliminated, setLoadingEliminated] = useState(false);
 
   // 1. Authenticate user
   useEffect(() => {
@@ -41,8 +59,61 @@ export default function AdminPage() {
   useEffect(() => {
     if (user && user.email === 'tools.claudius@gmail.com') {
       fetchMatches();
+      fetchEliminatedTeams();
     }
   }, [user]);
+
+  const fetchEliminatedTeams = async () => {
+    try {
+      const res = await fetch('/api/admin/eliminate-team');
+      const data = await res.json();
+      if (data.success) {
+        setEliminatedTeams(data.teams.map((t: any) => t.team_name));
+      }
+    } catch (err) {
+      console.error('Error fetching eliminated teams:', err);
+    }
+  };
+
+  const handleEliminateTeam = async (teamName: string, action: 'eliminate' | 'restore') => {
+    if (!teamName) return;
+    setLoadingEliminated(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+
+      if (!token) {
+        alert('Nincs érvényes munkamenet token!');
+        return;
+      }
+
+      const res = await fetch('/api/admin/eliminate-team', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ teamName, action })
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Műveleti hiba');
+      }
+
+      if (action === 'eliminate') {
+        setEliminatedTeams(prev => [...prev, teamName]);
+        setTeamToEliminate('');
+      } else {
+        setEliminatedTeams(prev => prev.filter(t => t !== teamName));
+      }
+    } catch (err: any) {
+      console.error(err);
+      alert('Hiba: ' + err.message);
+    } finally {
+      setLoadingEliminated(false);
+    }
+  };
 
   const fetchMatches = async () => {
     const { data, error } = await supabase
@@ -323,6 +394,70 @@ export default function AdminPage() {
                 Kattints egy mérkőzésre a listából a szerkesztéshez és lezáráshoz.
               </div>
             )}
+
+            {/* Eliminated Teams Manager Card */}
+            <div className="rounded-3xl border border-line bg-card p-6 shadow-md mt-6 space-y-4 text-left">
+              <div className="pb-3 border-b border-line">
+                <h3 className="font-bold font-display text-[15px] text-ink">Kiesett csapatok kezelése</h3>
+                <p className="text-xs text-faint mt-1">
+                  Itt manuálisan is kiesettnek jelölhetsz csapatokat (pl. csoportkör után), ami azonnal aktiválja a Kiesési Válaszút modalt a felhasználóknál.
+                </p>
+              </div>
+
+              {/* Add eliminated team */}
+              <div className="flex gap-2">
+                <select
+                  value={teamToEliminate}
+                  onChange={(e) => setTeamToEliminate(e.target.value)}
+                  className="flex-1 p-2 bg-wash border border-line2 rounded-xl text-xs font-semibold text-ink focus:outline-none cursor-pointer"
+                >
+                  <option value="">-- Válassz csapatot --</option>
+                  {TEAMS_LIST.filter(t => !eliminatedTeams.includes(t)).map(t => (
+                    <option key={t} value={t}>{t}</option>
+                  ))}
+                </select>
+                <button
+                  type="button"
+                  onClick={() => handleEliminateTeam(teamToEliminate, 'eliminate')}
+                  disabled={loadingEliminated || !teamToEliminate}
+                  className="bg-red-600 text-white font-bold text-xs px-4 py-2 rounded-xl hover:bg-red-700 disabled:opacity-50 cursor-pointer shrink-0 transition-all"
+                >
+                  Kizár
+                </button>
+              </div>
+
+              {/* List of eliminated teams */}
+              <div className="space-y-2">
+                <label className="block text-[10px] font-bold text-faint uppercase tracking-wider">
+                  Kiesett csapatok ({eliminatedTeams.length})
+                </label>
+                {eliminatedTeams.length > 0 ? (
+                  <div className="max-h-52 overflow-y-auto border border-line rounded-xl divide-y divide-line nice-scroll bg-wash p-1">
+                    {eliminatedTeams.map(t => (
+                      <div key={t} className="flex items-center justify-between p-2 text-xs font-semibold">
+                        <div className="flex items-center gap-2">
+                          <FlagBadge country={t} size={14} />
+                          <span>{t}</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleEliminateTeam(t, 'restore')}
+                          disabled={loadingEliminated}
+                          className="text-mid hover:text-emerald-600 hover:border-emerald-200 px-2 py-0.5 border border-line bg-white rounded-md text-[10px] cursor-pointer transition-colors"
+                          title="Visszaállítás"
+                        >
+                          Visszaállít
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-xs text-faint italic text-center py-4 bg-wash rounded-xl border border-dashed border-line">
+                    Még nincs kiesett csapat.
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         </div>
       </main>

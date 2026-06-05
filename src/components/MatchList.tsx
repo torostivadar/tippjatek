@@ -26,8 +26,7 @@ function deriveStatus(match: Match, pred: Prediction | undefined, favoriteTeam?:
     match.team_a.includes('/') || 
     match.team_a.includes('helyezettje') || 
     match.team_a.startsWith('W-') || 
-    match.team_a.startsWith('L-') || 
-    match.id === '6'; // Mock placeholder
+    match.team_a.startsWith('L-');
 
   const ms = new Date(match.start_time).getTime() - Date.now();
   const within72 = ms > 0 && ms <= 72 * 3600000;
@@ -149,8 +148,8 @@ interface DayHeaderProps {
 
 function DayHeader({ label, count }: DayHeaderProps) {
   return (
-    <div className="sticky top-0 z-10 -mx-1 px-1">
-      <div className="flex items-center gap-2 bg-slate-50/90 backdrop-blur-sm py-1.5">
+    <div className="pt-3 pb-1">
+      <div className="flex items-center gap-2">
         <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-mid">{label}</span>
         <span className="h-px flex-1 bg-line" />
         <span className="font-mono text-[10px] font-bold text-faint">{count}</span>

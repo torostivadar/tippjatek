@@ -451,8 +451,7 @@ export function MatchDetail({ match, prediction, onSave, favoriteTeam }: MatchDe
     match.team_a.includes('/') || 
     match.team_a.includes('helyezettje') || 
     match.team_a.startsWith('W-') || 
-    match.team_a.startsWith('L-') || 
-    match.id === '6';
+    match.team_a.startsWith('L-');
 
   const theme = getGroupTheme(match.group);
   const hasChanges = a !== (prediction?.predicted_a ?? 0) || b !== (prediction?.predicted_b ?? 0) || isTuti !== (prediction?.is_tuti ?? false);

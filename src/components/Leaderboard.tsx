@@ -1,4 +1,5 @@
 import React from 'react';
+
 import { Icon } from './Icons';
 import { Profile } from '@/src/types';
 
@@ -60,6 +61,7 @@ export function Leaderboard({ profiles, currentUserId }: LeaderboardProps) {
                   </span>
                   <div className="min-w-0">
                     <span className={`block text-[13px] font-bold truncate font-display ${isCurrentUser ? 'text-accent' : 'text-ink'}`}>
+                      {p.avatar && <span className="mr-1.5 align-middle text-[15px] select-none" role="img" aria-label="avatar">{p.avatar}</span>}
                       {p.username} {isCurrentUser && '(Én)'}
                     </span>
                     <span className="font-mono text-[10px] text-faint tabular-nums whitespace-nowrap">

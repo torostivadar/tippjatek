@@ -9,6 +9,7 @@ import { Leaderboard } from '@/src/components/Leaderboard';
 import { Auth } from '@/src/components/Auth';
 import { Icon } from '@/src/components/Icons';
 import { Rules } from '@/src/components/Rules';
+import { CrossroadsModal } from '@/src/components/CrossroadsModal';
 
 // Full list of 48 teams in the World Cup
 const TEAMS_LIST = [
@@ -31,11 +32,15 @@ export default function Home() {
     matches,
     predictions,
     profiles,
+    eliminatedTeams,
     activeTab,
     setActiveTab,
     savePrediction,
     selectFavoriteTeam,
-    saveChampionPrediction
+    saveChampionPrediction,
+    changeUsername,
+    changeAvatar,
+    submitCrossroadsChoice
   } = useApp();
 
   const [selectedMatchId, setSelectedMatchId] = useState<string>('1');
@@ -54,6 +59,8 @@ export default function Home() {
 
   const currentProfile = profiles.find(p => p.id === user?.id);
   const showFavoritePrompt = user && currentProfile && !currentProfile.favorite_team;
+  const isFavoriteTeamEliminated = currentProfile && currentProfile.favorite_team && eliminatedTeams.includes(currentProfile.favorite_team);
+  const showCrossroadsBlock = user && currentProfile && isFavoriteTeamEliminated && !currentProfile.has_transferred;
 
   // The World Cup starts on June 11, 2026 at 21:00 CEST (19:00 UTC)
   const isBeforeTournamentStart = new Date() < new Date('2026-06-11T19:00:00Z');
@@ -72,6 +79,17 @@ export default function Home() {
       <div className="min-h-screen flex items-center justify-center p-4">
         <Auth />
       </div>
+    );
+  }
+
+  // Enforce Crossroads Modal (Option A or B) if favorite team was knocked out
+  if (showCrossroadsBlock && currentProfile?.favorite_team) {
+    return (
+      <CrossroadsModal
+        favoriteTeam={currentProfile.favorite_team}
+        eliminatedTeams={eliminatedTeams}
+        onSubmitChoice={submitCrossroadsChoice}
+      />
     );
   }
 
@@ -118,7 +136,7 @@ export default function Home() {
 
   const openTipsCount = matches.filter(m => {
     const isFinished = m.status === 'FINISHED';
-    const isTBD = m.team_a.includes('/') || m.team_a.includes('helyezettje') || m.id === '6';
+    const isTBD = m.team_a.includes('/') || m.team_a.includes('helyezettje');
     if (isFinished || isTBD) return false;
     const hasPrediction = predictions.some(p => p.match_id === m.id);
     return !hasPrediction;
@@ -129,19 +147,34 @@ export default function Home() {
 
   return (
     <div className="min-h-screen text-ink pb-20">
-      <Navigation activeTab={activeTab} setActiveTab={setActiveTab} user={user} />
+      <Navigation 
+        activeTab={activeTab} 
+        setActiveTab={setActiveTab} 
+        user={user} 
+        username={currentProfile?.username}
+        favoriteTeam={currentProfile?.favorite_team}
+        championPrediction={currentProfile?.champion_prediction}
+        avatar={currentProfile?.avatar}
+        onChangeUsername={changeUsername}
+        onChangeAvatar={changeAvatar}
+        onSaveChampionPrediction={saveChampionPrediction}
+        onSelectFavoriteTeam={selectFavoriteTeam}
+      />
 
       <main className="mx-auto px-4 md:px-6 pt-24 pb-28 max-w-[1280px]">
         {/* Header section */}
         <header className="mb-7 flex flex-col lg:flex-row lg:items-end justify-between gap-5">
           <div>
             <h1 className="text-3xl md:text-[40px] font-bold text-ink tracking-tight font-display leading-[1.05]">
-              {activeTab === 'matches' ? 'Mérkőzések & elemzések' : activeTab === 'leaderboard' ? 'Globális tippbajnokság' : 'Csoportok & Ágrajz'}
+              {activeTab === 'matches' ? 'Mérkőzések & elemzések' : 
+               activeTab === 'leaderboard' ? 'Globális tippbajnokság' : 
+               activeTab === 'groups' ? 'Csoportok & Ágrajz' : 'Játékszabály'}
             </h1>
             <p className="text-mid text-[13px] mt-2 max-w-xl leading-relaxed">
               {activeTab === 'matches' && 'Válassz meccset a listából, add le a tipped, és mélyülj el az AI-elemzésben, oddsokban és formamutatókban.'}
               {activeTab === 'leaderboard' && 'A barátok pontszámai, telitalálatai és az aktuális helyezésed egy helyen.'}
               {activeTab === 'groups' && 'A torna csoportbeosztása és a kieséses szakasz ágrajza.'}
+              {activeTab === 'rules' && 'Ismerd meg a pontozási rendszert, a TUTI tippeket, a Fan Factor bónuszt és a kiesési szabályokat.'}
             </p>
           </div>
           {activeTab === 'matches' && (
@@ -203,50 +236,7 @@ export default function Home() {
         {/* 2. LEADERBOARD TAB */}
         {activeTab === 'leaderboard' && (
           <div className="space-y-6">
-            {/* World Cup Champion Prediction Card (Active before first match) */}
-            {currentProfile && (
-              <div className="max-w-2xl mx-auto rounded-3xl border border-line bg-card p-6 shadow-[0_10px_30px_-15px_rgba(16,24,40,0.20)]">
-                <div className="flex items-start gap-4">
-                  <span className="w-10 h-10 rounded-2xl bg-purple-50 border border-purple-100 flex items-center justify-center shrink-0">
-                    <Icon name="sparkles" size={18} className="text-accent" />
-                  </span>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="text-[14px] font-bold text-ink font-display">Világbajnok tipp (+150 pont)</h3>
-                    {isBeforeTournamentStart ? (
-                      <div className="mt-3">
-                        <p className="text-[12px] text-mid mb-2.5">
-                          Tippeld meg a világbajnokot az első vb meccs kezdete előtt! A helyes tippért a bajnokság végén +150 pont jár.
-                        </p>
-                        <select
-                          value={currentProfile.champion_prediction || ''}
-                          onChange={(e) => saveChampionPrediction(e.target.value)}
-                          className="p-2.5 bg-wash border border-line2 rounded-xl text-xs font-semibold text-ink focus:outline-none focus:border-accent"
-                        >
-                          <option value="">-- Válassz világbajnokot --</option>
-                          {TEAMS_LIST.map(t => (
-                            <option key={t} value={t}>{t}</option>
-                          ))}
-                        </select>
-                      </div>
-                    ) : (
-                      <div className="mt-2 text-[12.5px] text-mid font-medium flex items-center gap-1.5">
-                        <span>Leadott tipped:</span>
-                        {currentProfile.champion_prediction ? (
-                          <span className="font-bold text-accent bg-accent/5 border border-accent/20 px-2 py-0.5 rounded">
-                            {currentProfile.champion_prediction}
-                          </span>
-                        ) : (
-                          <span className="text-rose-500 font-bold bg-rose-50 border border-rose-100 px-2 py-0.5 rounded">
-                            Nem tippeltél időben
-                          </span>
-                        )}
-                        <span className="text-[10px] text-faint italic ml-1">(Az első meccs után a tippek lezárultak).</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            )}
+            {/* World Cup Champion Prediction Card has been moved to the Profile Dropdown */}
 
             <Leaderboard profiles={profiles} currentUserId={user.id} />
           </div>

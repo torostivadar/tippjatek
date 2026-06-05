@@ -19,7 +19,7 @@ export function Rules() {
           </div>
         </div>
         <p className="text-mid text-[13.5px] leading-relaxed">
-          Üdvözlünk a baráti foci VB tippjátékban! A szabályokat úgy alakítottuk ki, hogy az utolsó pillanatig izgalmas, taktikus és kiszámíthatatlan maradjon a bajnokság. Olvasd el a részleteket, hogy a legtöbb pontot gyűjthesd be!
+          A szabályokat úgy alakítottuk ki, hogy az utolsó pillanatig izgalmas, taktikus és kiszámíthatatlan maradjon a bajnokság. Olvasd el a részleteket, hogy a legtöbb pontot gyűjthesd be!
         </p>
       </div>
 
@@ -133,6 +133,44 @@ export function Rules() {
           </div>
           <div className="mt-5 pt-4 border-t border-line text-[11px] text-faint leading-relaxed">
             A pontok kiosztása a vb döntő lezárása után, a torna legvégén történik meg automatikusan.
+          </div>
+        </div>
+
+        {/* 5. Kiesési Válaszút (The Knockout Crossroads) Card */}
+        <div className="rounded-3xl border border-line bg-card p-6 shadow-sm flex flex-col justify-between md:col-span-2">
+          <div>
+            <div className="flex items-center gap-2 mb-3">
+              <Icon name="swords" size={16} className="text-rose-500" strokeWidth={2.4} />
+              <h3 className="text-[13px] font-bold uppercase tracking-wider text-ink font-display">Kiesési Válaszút (The Knockout Crossroads)</h3>
+            </div>
+            <p className="text-mid text-[12.5px] leading-relaxed mb-4">
+              Mi történik, ha kiesik a Kedvenc Csapatod a tornáról? Nem maradsz bónusz nélkül, de komoly döntést kell hoznod! Amint a választott kedvenc csapatod kiesik, a rendszer zárolja a fiókodat, és a következő belépéskor választás elé állít:
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="bg-rose-50/50 border border-rose-200/60 rounded-2xl p-4 text-[12.5px]">
+                <div className="font-bold text-rose-700 mb-1.5 flex items-center gap-1.5">
+                  <span className="w-5 h-5 rounded-full bg-rose-100 flex items-center justify-center font-mono text-xs">A</span>
+                  <span>„ÚJ KEDVENC” (Átigazolás)</span>
+                </div>
+                <p className="text-mid text-[12px] leading-relaxed">
+                  Választhatsz egy **új kedvenc csapatot** a még versenyben lévő válogatottak közül. Ezzel továbbra is él a **pontduplázás (×2 bónusz)** az új csapatod meccseire. 
+                  <span className="block mt-2 font-bold text-rose-600">Ára: −30 pont levonás (átigazolási adó)</span>
+                </p>
+              </div>
+              <div className="bg-emerald-50/50 border border-emerald-200/60 rounded-2xl p-4 text-[12.5px]">
+                <div className="font-bold text-emerald-700 mb-1.5 flex items-center gap-1.5">
+                  <span className="w-5 h-5 rounded-full bg-emerald-100 flex items-center justify-center font-mono text-xs">B</span>
+                  <span>„HŰSÉGNYILATKOZAT” (Kitartás)</span>
+                </div>
+                <p className="text-mid text-[12px] leading-relaxed">
+                  Úgy döntesz, hogy hűséges maradsz a már kiesett csapatodhoz. Nem választasz újat, a pontduplázási bónuszod elvész a torna hátralévő részére.
+                  <span className="block mt-2 font-bold text-emerald-600">Jutalmad: +30 pont hűségbónusz azonnal</span>
+                </p>
+              </div>
+            </div>
+          </div>
+          <div className="mt-5 pt-4 border-t border-line text-[11px] text-faint leading-relaxed">
+            <span className="font-bold">Megjegyzés:</span> A döntést **azonnal és kötelezően** meg kell hoznod a felugró ablakban (addig nem éred el a tippeket és a ranglistát). A választásod végleges, később nem módosítható!
           </div>
         </div>
 

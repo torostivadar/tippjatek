@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/src/db';
-import { matches, predictions, profiles } from '@/src/db/schema';
+import { matches, predictions, profiles, eliminatedTeams } from '@/src/db/schema';
 import { eq, and } from 'drizzle-orm';
 import { supabase } from '@/src/lib/supabase';
 
@@ -43,10 +43,28 @@ export async function POST(req: NextRequest) {
       })
       .where(eq(matches.id, matchId));
 
-    // 4. If status is FINISHED, run the scoring algorithm for all predictions on this match
     if (status === 'FINISHED' && scoreA !== null && scoreB !== null) {
       const actA = Number(scoreA);
       const actB = Number(scoreB);
+
+      // Check if it's a knockout match, and add the loser to eliminated_teams
+      const [matchRecord] = await db
+        .select()
+        .from(matches)
+        .where(eq(matches.id, matchId))
+        .limit(1);
+
+      if (matchRecord) {
+        const isKnockout = ['Legjobb 32', 'Nyolcaddöntő', 'Negyeddöntő', 'Elődöntő', 'Bronzmérkőzés', 'Döntő'].includes(matchRecord.group);
+        if (isKnockout) {
+          const loser = actA < actB ? matchRecord.team_a : matchRecord.team_b;
+          await db
+            .insert(eliminatedTeams)
+            .values({ team_name: loser })
+            .onConflictDoNothing();
+          console.log(`Knockout loser automatically eliminated: ${loser}`);
+        }
+      }
 
       // Fetch all predictions for this match
       const matchPredictions = await db

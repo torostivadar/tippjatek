@@ -9,6 +9,7 @@ export function useApp() {
   const [matches, setMatches] = useState<Match[]>([]);
   const [predictions, setPredictions] = useState<Prediction[]>([]);
   const [profiles, setProfiles] = useState<Profile[]>([]);
+  const [eliminatedTeams, setEliminatedTeams] = useState<string[]>([]);
   const [activeTab, setActiveTab] = useState<'matches' | 'leaderboard' | 'groups' | 'rules'>('matches');
 
   // Load User Auth Session
@@ -83,6 +84,13 @@ export function useApp() {
       
       setProfiles(profileData || []);
 
+      // 5. Fetch eliminated teams
+      const { data: eliminatedData } = await supabase
+        .from('eliminated_teams')
+        .select('team_name');
+      
+      setEliminatedTeams((eliminatedData || []).map(x => x.team_name));
+
     } catch (err) {
       console.error('Error fetching data:', err);
     } finally {
@@ -119,9 +127,24 @@ export function useApp() {
       })
       .subscribe();
 
+    // Listen to eliminated teams
+    const eliminatedChannel = supabase
+      .channel('realtime-eliminated')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'eliminated_teams' }, (payload) => {
+        if (payload.eventType === 'INSERT') {
+          const inserted = payload.new as { team_name: string };
+          setEliminatedTeams(prev => [...prev, inserted.team_name]);
+        } else if (payload.eventType === 'DELETE') {
+          const deleted = payload.old as { team_name: string };
+          setEliminatedTeams(prev => prev.filter(x => x !== deleted.team_name));
+        }
+      })
+      .subscribe();
+
     return () => {
       supabase.removeChannel(matchesChannel);
       supabase.removeChannel(profilesChannel);
+      supabase.removeChannel(eliminatedChannel);
     };
   }, [user]);
 
@@ -186,6 +209,13 @@ export function useApp() {
 
   const selectFavoriteTeam = async (teamName: string) => {
     if (!user) return;
+
+    const isBeforeTournamentStart = new Date() < new Date('2026-06-11T19:00:00Z');
+    if (!isBeforeTournamentStart) {
+      alert('A torna már elkezdődött, a kedvenc csapat választása lezárult!');
+      return;
+    }
+
     try {
       const { error } = await supabase
         .from('profiles')
@@ -214,16 +244,79 @@ export function useApp() {
     }
   };
 
+  const changeUsername = async (newName: string) => {
+    if (!user || !newName.trim()) return;
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ username: newName.trim() })
+        .eq('id', user.id);
+      
+      if (error) throw error;
+      setProfiles(prev => prev.map(p => p.id === user.id ? { ...p, username: newName.trim() } : p));
+    } catch (err) {
+      console.error('Error updating username:', err);
+      alert('Hiba történt a név mentése során!');
+    }
+  };
+
+  const changeAvatar = async (emoji: string) => {
+    if (!user) return;
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ avatar: emoji })
+        .eq('id', user.id);
+      
+      if (error) throw error;
+      setProfiles(prev => prev.map(p => p.id === user.id ? { ...p, avatar: emoji } : p));
+    } catch (err) {
+      console.error('Error updating avatar:', err);
+      alert('Hiba történt az avatar mentése során!');
+    }
+  };
+
+  const submitCrossroadsChoice = async (option: 'A' | 'B', newFavoriteTeam?: string) => {
+    if (!user) return;
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+      
+      const res = await fetch('/api/profile/crossroads', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ option, newFavoriteTeam })
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Sikertelen kérés');
+      }
+
+      await fetchData();
+    } catch (err: any) {
+      console.error('submitCrossroadsChoice error:', err);
+      alert(err.message || 'Hiba történt a döntés elküldése során!');
+    }
+  };
+
   return {
     user,
     loading,
     matches,
     predictions,
     profiles,
+    eliminatedTeams,
     activeTab,
     setActiveTab,
     savePrediction,
     selectFavoriteTeam,
-    saveChampionPrediction
+    saveChampionPrediction,
+    changeUsername,
+    changeAvatar,
+    submitCrossroadsChoice
   };
 }

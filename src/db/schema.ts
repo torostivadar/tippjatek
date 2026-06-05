@@ -1,4 +1,4 @@
-import { pgTable, uuid, text, integer, timestamp, boolean, jsonb } from 'drizzle-orm/pg-core';
+import { pgTable, uuid, text, integer, timestamp, boolean, jsonb, unique } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
 
 // 1. PROFILES Table (Extends Supabase auth.users)
@@ -10,6 +10,8 @@ export const profiles = pgTable('profiles', {
   correct_outcomes: integer('correct_outcomes').default(0).notNull(),
   favorite_team: text('favorite_team'), // User's selected favorite team for "Fan Factor" (double points)
   champion_prediction: text('champion_prediction'), // User's prediction for World Cup winner
+  has_transferred: boolean('has_transferred').default(false).notNull(), // Has transferred favorite team after knockout
+  avatar: text('avatar'), // Chosen animal emoji avatar
   created_at: timestamp('created_at').defaultNow().notNull(),
 });
 
@@ -37,7 +39,9 @@ export const predictions = pgTable('predictions', {
   is_tuti: boolean('is_tuti').default(false).notNull(), // "TUTI TIPP" toggle
   created_at: timestamp('created_at').defaultNow().notNull(),
   updated_at: timestamp('updated_at').defaultNow().notNull(),
-});
+}, (t) => [
+  unique('unique_match_user').on(t.match_id, t.user_id)
+]);
 
 // 4. MATCH DETAILS Table (Extra AI analytics, Head to Head stats, odds, and news)
 export const matchDetails = pgTable('match_details', {
@@ -50,4 +54,10 @@ export const matchDetails = pgTable('match_details', {
   prediction_ai: jsonb('prediction_ai'), // AI generated prediction percentages and text
   news: jsonb('news'), // array of news items
   updated_at: timestamp('updated_at').defaultNow().notNull(),
+});
+
+// 5. ELIMINATED TEAMS Table (Track teams eliminated from the tournament)
+export const eliminatedTeams = pgTable('eliminated_teams', {
+  team_name: text('team_name').primaryKey(),
+  eliminated_at: timestamp('eliminated_at').defaultNow().notNull(),
 });
