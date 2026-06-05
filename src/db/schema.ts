@@ -25,6 +25,7 @@ export const matches = pgTable('matches', {
   start_time: timestamp('start_time').notNull(), // UTC Timestamp
   status: text('status', { enum: ['NOT_STARTED', 'LIVE', 'FINISHED'] }).default('NOT_STARTED').notNull(),
   group: text('group').notNull(), // e.g. "A", "B", "Best of 32", "Nyolcaddöntő", "Negyeddöntő", "Elődöntő", "Döntő"
+  api_fixture_id: integer('api_fixture_id'), // API-Football fixture ID mapping
   created_at: timestamp('created_at').defaultNow().notNull(),
 });
 
