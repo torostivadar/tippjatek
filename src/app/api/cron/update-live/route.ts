@@ -6,21 +6,14 @@ import { syncMatchesAndScore } from '@/src/lib/matchService';
 
 export async function GET(req: NextRequest) {
   try {
-    // 1. Authenticate the request (Vercel Cron Header or secret query param)
+    // 1. Log request source.
+    // We allow public/on-demand requests because the database-level "célfotó" gatekeeper 
+    // strictly guarantees a maximum of 1 or 2 API calls per match, making it completely 
+    // immune to API quota abuse/exhaustion from public spamming.
     const authHeader = req.headers.get('Authorization') || '';
     const cronSecret = process.env.CRON_SECRET || '';
-    
-    const url = new URL(req.url);
-    const querySecret = url.searchParams.get('secret') || '';
-
-    const isCronSecretValid = cronSecret && authHeader === `Bearer ${cronSecret}`;
-    const isQuerySecretValid = cronSecret && querySecret === cronSecret;
-    const isDev = process.env.NODE_ENV === 'development';
-
-    if (!isCronSecretValid && !isQuerySecretValid && !isDev) {
-      console.warn('Unauthorized cron trigger attempt.');
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const isCron = cronSecret && authHeader === `Bearer ${cronSecret}`;
+    console.log(`Cron route triggered (Source: ${isCron ? 'Vercel Cron' : 'On-Demand Public Client'}).`);
 
     // 2. Fetch all unfinished matches from our database.
     const unfinishedMatches = await db

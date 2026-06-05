@@ -91,6 +91,9 @@ export function useApp() {
       
       setEliminatedTeams((eliminatedData || []).map(x => x.team_name));
 
+      // Trigger background API sync (on-demand / lazy sync)
+      fetch('/api/cron/update-live').catch(err => console.error('On-demand sync error:', err));
+
     } catch (err) {
       console.error('Error fetching data:', err);
     } finally {
