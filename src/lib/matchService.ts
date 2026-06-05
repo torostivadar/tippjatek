@@ -1,9 +1,9 @@
 import { db } from '@/src/db';
 import { matches } from '@/src/db/schema';
-import { eq, not, and, lte, gte } from 'drizzle-orm';
+import { eq, not } from 'drizzle-orm';
 import { scoreMatch } from './scoring';
 
-// Translation map from API-Football English names to our Hungarian team names
+// Translation map from football-data.org English names to our Hungarian team names
 const ENGLISH_TO_HUNGARIAN: Record<string, string> = {
   'Algeria': 'Algéria',
   'England': 'Anglia',
@@ -65,17 +65,13 @@ const ENGLISH_TO_HUNGARIAN: Record<string, string> = {
   'Cabo Verde': 'Zöld-foki Köztársaság'
 };
 
-const HUNGARIAN_TO_ENGLISH: Record<string, string> = Object.fromEntries(
-  Object.entries(ENGLISH_TO_HUNGARIAN).map(([eng, hun]) => [hun, eng])
-);
-
 let mockFixturesData: any[] | null = null;
 
 export function setMockFixtures(data: any[] | null) {
   mockFixturesData = data;
 }
 
-// Fetch World Cup 2026 matches from API-Football
+// Fetch World Cup 2026 matches from football-data.org
 export async function fetchApiFixtures() {
   if (mockFixturesData) {
     return mockFixturesData;
@@ -86,33 +82,27 @@ export async function fetchApiFixtures() {
     throw new Error('API_FOOTBALL_KEY is not set in environment variables');
   }
 
-  const response = await fetch('https://v3.football.api-sports.io/fixtures?league=1&season=2026', {
+  const response = await fetch('https://api.football-data.org/v4/competitions/WC/matches', {
     method: 'GET',
     headers: {
-      'x-apisports-key': apiKey,
-      'x-apisports-host': 'v3.football.api-sports.io'
+      'X-Auth-Token': apiKey
     },
-    // Keep it short, fail quickly if external API is slow
     next: { revalidate: 0 }
   });
 
   if (!response.ok) {
-    throw new Error(`API-Football responded with status ${response.status}`);
+    throw new Error(`football-data.org responded with status ${response.status}`);
   }
 
   const data = await response.json();
-  if (data.errors && Object.keys(data.errors).length > 0) {
-    throw new Error(`API-Football error: ${JSON.stringify(data.errors)}`);
-  }
-
-  return data.response || [];
+  return data.matches || [];
 }
 
-// Synchronize database matches with API-Football data
+// Synchronize database matches with football-data.org data
 export async function syncMatchesAndScore(targetMatchIds?: string[]) {
-  console.log('Starting API-Football sync...');
+  console.log('Starting football-data.org sync...');
   const apiFixtures = await fetchApiFixtures();
-  console.log(`Fetched ${apiFixtures.length} fixtures from API-Football.`);
+  console.log(`Fetched ${apiFixtures.length} fixtures from football-data.org.`);
 
   // Get all matches from our DB that are not finished
   const dbMatches = await db
@@ -131,14 +121,14 @@ export async function syncMatchesAndScore(targetMatchIds?: string[]) {
     const apiFixture = apiFixtures.find((api: any) => {
       // 1. Match by api_fixture_id if already saved
       if (dbMatch.api_fixture_id !== null) {
-        return api.fixture.id === dbMatch.api_fixture_id;
+        return api.id === dbMatch.api_fixture_id;
       }
 
       // 2. Pair dynamically if api_fixture_id is not yet set
       const isGroupStage = !['Legjobb 32', 'Nyolcaddöntő', 'Negyeddöntő', 'Elődöntő', 'Bronzmérkőzés', 'Döntő'].includes(dbMatch.group);
       
-      const apiHomeHun = ENGLISH_TO_HUNGARIAN[api.teams.home.name];
-      const apiAwayHun = ENGLISH_TO_HUNGARIAN[api.teams.away.name];
+      const apiHomeHun = api.homeTeam?.name ? ENGLISH_TO_HUNGARIAN[api.homeTeam.name] : null;
+      const apiAwayHun = api.awayTeam?.name ? ENGLISH_TO_HUNGARIAN[api.awayTeam.name] : null;
 
       if (isGroupStage) {
         // Group Stage: Match by team names
@@ -148,7 +138,7 @@ export async function syncMatchesAndScore(targetMatchIds?: string[]) {
         );
       } else {
         // Knockout Stage: Match by start time (match start times are unique per slot)
-        const apiTime = new Date(api.fixture.date).getTime();
+        const apiTime = new Date(api.utcDate).getTime();
         const dbTime = new Date(dbMatch.start_time).getTime();
         // Allow a 1-hour window for timezone safety, but they should match exactly
         return Math.abs(apiTime - dbTime) < 60 * 60 * 1000;
@@ -163,18 +153,18 @@ export async function syncMatchesAndScore(targetMatchIds?: string[]) {
     if (dbMatch.api_fixture_id === null) {
       await db
         .update(matches)
-        .set({ api_fixture_id: apiFixture.fixture.id })
+        .set({ api_fixture_id: apiFixture.id })
         .where(eq(matches.id, dbMatch.id));
-      dbMatch.api_fixture_id = apiFixture.fixture.id;
-      console.log(`Mapped match ${dbMatch.id} to API fixture ID ${apiFixture.fixture.id}`);
+      dbMatch.api_fixture_id = apiFixture.id;
+      console.log(`Mapped match ${dbMatch.id} to API fixture ID ${apiFixture.id}`);
     }
 
     const isKnockout = ['Legjobb 32', 'Nyolcaddöntő', 'Negyeddöntő', 'Elődöntő', 'Bronzmérkőzés', 'Döntő'].includes(dbMatch.group);
-    const apiHomeName = apiFixture.teams.home.name;
-    const apiAwayName = apiFixture.teams.away.name;
+    const apiHomeName = apiFixture.homeTeam?.name;
+    const apiAwayName = apiFixture.awayTeam?.name;
     
     // Automatically update knockout placeholders with real team names if they are determined
-    if (isKnockout) {
+    if (isKnockout && apiHomeName && apiAwayName) {
       const isHomeReal = ENGLISH_TO_HUNGARIAN.hasOwnProperty(apiHomeName);
       const isAwayReal = ENGLISH_TO_HUNGARIAN.hasOwnProperty(apiAwayName);
 
@@ -194,37 +184,29 @@ export async function syncMatchesAndScore(targetMatchIds?: string[]) {
       }
     }
 
-    const apiStatus = apiFixture.fixture.status.short;
-    const goalsHome = apiFixture.goals.home;
-    const goalsAway = apiFixture.goals.away;
+    const apiStatus = apiFixture.status;
+    const goalsHome = apiFixture.score?.fullTime?.home;
+    const goalsAway = apiFixture.score?.fullTime?.away;
 
-    // Check if match is finished (FT: Full Time, AET: After Extra Time, PEN: Penalty Shootout)
-    const isFinished = ['FT', 'AET', 'PEN'].includes(apiStatus);
-    const isLive = ['1H', 'HT', '2H', 'ET', 'BT', 'P', 'INT'].includes(apiStatus);
+    // Check if match is finished (FINISHED)
+    const isFinished = apiStatus === 'FINISHED';
+    const isLive = ['IN_PLAY', 'PAUSED'].includes(apiStatus);
 
-    if (isFinished) {
-      // Compute official score up to extra time, completely ignoring penalty shootouts
-      let scoreA = goalsHome;
-      let scoreB = goalsAway;
-
-      if (apiStatus === 'PEN' || apiStatus === 'AET') {
-        const extratime = apiFixture.score.extratime;
-        if (extratime && extratime.home !== null && extratime.away !== null) {
-          scoreA = extratime.home;
-          scoreB = extratime.away;
-        }
-      }
+    if (isFinished && goalsHome !== null && goalsAway !== null) {
+      // In football-data.org, score.fullTime contains the score at the end of regular or extra time, 
+      // but completely excludes penalty shootouts (which is exactly what we need!).
+      const scoreA = Number(goalsHome);
+      const scoreB = Number(goalsAway);
 
       // Determine the loser for knockout elimination (using the winner flag from API)
       let loserTeamName: string | undefined = undefined;
-      if (isKnockout) {
-        const homeWinner = apiFixture.teams.home.winner; // true/false/null
-        const awayWinner = apiFixture.teams.away.winner;
+      if (isKnockout && apiHomeName && apiAwayName) {
+        const winnerFlag = apiFixture.score?.winner; // 'HOME_TEAM', 'AWAY_TEAM', 'DRAW'
         
-        if (homeWinner === false) {
-          loserTeamName = ENGLISH_TO_HUNGARIAN[apiHomeName];
-        } else if (awayWinner === false) {
+        if (winnerFlag === 'HOME_TEAM') {
           loserTeamName = ENGLISH_TO_HUNGARIAN[apiAwayName];
+        } else if (winnerFlag === 'AWAY_TEAM') {
+          loserTeamName = ENGLISH_TO_HUNGARIAN[apiHomeName];
         }
       }
 
@@ -233,14 +215,14 @@ export async function syncMatchesAndScore(targetMatchIds?: string[]) {
       console.log(`Match ${dbMatch.id} finished. Scored: ${scoreA}-${scoreB}, status=${apiStatus}, loser=${loserTeamName}`);
       updatedCount++;
     } 
-    else if (isLive) {
+    else if (isLive && goalsHome !== null && goalsAway !== null) {
       // Match in progress: update live scores
       if (dbMatch.score_a !== goalsHome || dbMatch.score_b !== goalsAway || dbMatch.status !== 'LIVE') {
         await db
           .update(matches)
           .set({
-            score_a: goalsHome !== null ? Number(goalsHome) : null,
-            score_b: goalsAway !== null ? Number(goalsAway) : null,
+            score_a: Number(goalsHome),
+            score_b: Number(goalsAway),
             status: 'LIVE'
           })
           .where(eq(matches.id, dbMatch.id));
@@ -248,7 +230,7 @@ export async function syncMatchesAndScore(targetMatchIds?: string[]) {
         updatedCount++;
       }
     }
-    else if (apiStatus === 'NS' && dbMatch.status !== 'NOT_STARTED') {
+    else if ((apiStatus === 'TIMED' || apiStatus === 'SCHEDULED') && dbMatch.status !== 'NOT_STARTED') {
       // Revert to NOT_STARTED if match has been postponed or reset
       await db
         .update(matches)
