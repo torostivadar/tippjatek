@@ -1,8 +1,3 @@
-/**
- * @license
- * SPDX-License-Identifier: Apache-2.0
- */
-
 export interface Match {
   id: string;
   team_a: string;
@@ -10,9 +5,8 @@ export interface Match {
   score_a: number | null;
   score_b: number | null;
   start_time: string;
-  status: 'UPCOMING' | 'LIVE' | 'FINISHED';
-  group?: string;
-  stadium?: string;
+  status: 'NOT_STARTED' | 'LIVE' | 'FINISHED';
+  group: string;
 }
 
 export interface Prediction {
@@ -21,14 +15,49 @@ export interface Prediction {
   match_id: string;
   predicted_a: number;
   predicted_b: number;
-  points_earned?: number;
+  points_earned?: number | null;
+  is_tuti: boolean;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface Profile {
   id: string;
   username: string;
-  avatar_url?: string;
   points: number;
+  correct_scores: number;
+  correct_outcomes: number;
+  favorite_team?: string | null;
+  champion_prediction?: string | null;
 }
 
-export type UserPrediction = Prediction & { match: Match };
+export interface MatchStats {
+  h2hSummary: string;
+  h2hHistory: { year: string; res: string; winner: string }[];
+  teamA: {
+    form: ('W' | 'D' | 'L')[];
+    temp: number;
+    injuries: string[];
+  };
+  teamB: {
+    form: ('W' | 'D' | 'L')[];
+    temp: number;
+    injuries: string[];
+  };
+  prediction: {
+    winA: number;
+    draw: number;
+    winB: number;
+    advice: string;
+    attackA: number;
+    attackB: number;
+    defenseA: number;
+    defenseB: number;
+  };
+  odds: {
+    winA: number;
+    draw: number;
+    winB: number;
+  };
+  news: string[];
+}

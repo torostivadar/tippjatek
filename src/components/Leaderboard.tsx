@@ -1,76 +1,94 @@
+import React from 'react';
+import { Icon } from './Icons';
 import { Profile } from '@/src/types';
-import { motion } from 'motion/react';
-import { Trophy, Medal, Star } from 'lucide-react';
-import { cn } from '@/src/lib/utils';
 
-export function Leaderboard({ profiles }: { profiles: Profile[] }) {
-  const sortedProfiles = [...profiles].sort((a, b) => b.points - a.points);
+interface LeaderboardProps {
+  profiles: Profile[];
+  currentUserId?: string;
+}
+
+export function Leaderboard({ profiles, currentUserId }: LeaderboardProps) {
+  const maxPoints = Math.max(...profiles.map((p) => p.points), 1);
+  
+  const getMedalColor = (idx: number) => {
+    if (idx === 0) return '#CA8A04'; // Gold
+    if (idx === 1) return '#94A3B8'; // Silver
+    if (idx === 2) return '#C2722E'; // Bronze
+    return '#B9C3D1';
+  };
 
   return (
-    <div className="bg-white rounded-3xl border border-slate-100 shadow-xl overflow-hidden max-w-2xl mx-auto">
-      <div className="p-8 bg-emerald-600 text-white">
-        <h2 className="text-2xl font-bold flex items-center gap-3 font-display">
-          <Trophy className="text-yellow-400" />
-          Ranglista
-        </h2>
-        <p className="text-emerald-100 mt-1">A legjobb tippmesterek</p>
-      </div>
+    <div className="max-w-2xl mx-auto">
+      <div className="rounded-3xl border border-line bg-card overflow-hidden shadow-[0_18px_50px_-24px_rgba(16,24,40,0.30)]">
+        <div 
+          className="flex items-center gap-3 px-6 py-5 border-b border-line"
+          style={{ background: 'linear-gradient(100deg, rgba(202,138,4,0.08), transparent 68%)' }}
+        >
+          <span className="w-11 h-11 rounded-2xl bg-amber-50 border border-amber-200 flex items-center justify-center">
+            <Icon name="trophy" size={20} className="text-amber-500" />
+          </span>
+          <div>
+            <h2 className="text-lg font-bold text-ink font-display">Baráti tippbajnokság</h2>
+            <p className="text-[11px] text-faint font-medium">Helyes kimenetel +30 pont · telitalálat ezen felül +20 pont</p>
+          </div>
+        </div>
 
-      <div className="divide-y divide-slate-50">
-        {sortedProfiles.map((profile, index) => {
-          const isTop3 = index < 3;
-          const rankColors = [
-            'bg-yellow-100 text-yellow-700 border-yellow-200',
-            'bg-slate-100 text-slate-700 border-slate-200',
-            'bg-orange-100 text-orange-700 border-orange-200',
-          ];
-
-          return (
-            <motion.div
-              key={profile.id}
-              initial={{ x: -20, opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              transition={{ delay: index * 0.05 }}
-              className={cn(
-                "flex items-center justify-between p-6 hover:bg-slate-50 transition-colors",
-                index === 0 && "bg-yellow-50/30"
-              )}
-            >
-              <div className="flex items-center gap-6">
-                <div className={cn(
-                  "w-10 h-10 rounded-xl flex items-center justify-center font-black border-2",
-                  isTop3 ? rankColors[index] : "bg-white text-slate-400 border-slate-100 shadow-sm"
-                )}>
-                  {index + 1}
-                </div>
-                
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-full border-4 border-white shadow-sm bg-slate-200 flex items-center justify-center text-lg font-bold">
-                    {profile.username[0].toUpperCase()}
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-slate-800 flex items-center gap-2">
-                      {profile.username}
-                      {index === 0 && <Star size={14} className="fill-yellow-400 text-yellow-400" />}
-                    </h3>
-                    <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest">
-                      {index === 0 ? 'Bajnok' : index < 3 ? 'Dobogós' : 'Játékos'}
-                    </p>
+        <div className="p-4 flex flex-col gap-2">
+          {profiles.map((p, idx) => {
+            const isCurrentUser = p.id === currentUserId;
+            const medalColor = getMedalColor(idx);
+            const isTop3 = idx < 3;
+            
+            return (
+              <div 
+                key={p.id}
+                className={`flex items-center justify-between gap-3 rounded-2xl border-2 px-3.5 py-3 transition-all
+                  ${isCurrentUser
+                    ? 'bg-[#F4F0FE] border-accent shadow-[0_8px_20px_-12px_rgba(124,58,237,0.5)]'
+                    : 'bg-card border-line hover:border-line2'}`}
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  <span 
+                    className="w-8 h-8 rounded-full flex items-center justify-center text-[12px] font-bold font-mono shrink-0"
+                    style={{ 
+                      color: isTop3 ? medalColor : '#8C97A8', 
+                      boxShadow: `inset 0 0 0 1.5px ${medalColor}`, 
+                      background: isTop3 ? `${medalColor}18` : 'transparent' 
+                    }}
+                  >
+                    {idx + 1}
+                  </span>
+                  <div className="min-w-0">
+                    <span className={`block text-[13px] font-bold truncate font-display ${isCurrentUser ? 'text-accent' : 'text-ink'}`}>
+                      {p.username} {isCurrentUser && '(Én)'}
+                    </span>
+                    <span className="font-mono text-[10px] text-faint tabular-nums whitespace-nowrap">
+                      {p.correct_scores} teli · {p.correct_outcomes} kimenetel
+                    </span>
                   </div>
                 </div>
-              </div>
 
-              <div className="text-right">
-                <span className="text-3xl font-black text-slate-900 leading-none font-display">
-                  {profile.points}
-                </span>
-                <span className="block text-[10px] font-bold text-emerald-600 uppercase tracking-widest mt-1">
-                  Pont
-                </span>
+                <div className="flex items-center gap-3 shrink-0">
+                  <div className="hidden sm:block w-24">
+                    <div className="w-full bg-wash2 h-1.5 rounded-full overflow-hidden">
+                      <div 
+                        className="h-full rounded-full transition-all duration-500" 
+                        style={{ 
+                          width: `${(p.points / maxPoints) * 100}%`, 
+                          background: isCurrentUser ? '#7C3AED' : '#C8D2DF' 
+                        }} 
+                      />
+                    </div>
+                  </div>
+                  <span className={`font-mono text-[13px] font-bold rounded-xl px-3 py-1.5 tabular-nums min-w-[72px] text-center whitespace-nowrap
+                    ${isCurrentUser ? 'bg-accent text-white' : 'bg-ink text-card'}`}>
+                    {p.points} p
+                  </span>
+                </div>
               </div>
-            </motion.div>
-          );
-        })}
+            );
+          })}
+        </div>
       </div>
     </div>
   );

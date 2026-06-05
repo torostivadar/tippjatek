@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { supabase } from '@/src/lib/supabase';
-import { motion } from 'motion/react';
-import { LogIn, UserPlus } from 'lucide-react';
+import { Icon } from './Icons';
 
 export function Auth() {
   const [loading, setLoading] = useState(false);
@@ -19,57 +18,63 @@ export function Auth() {
       if (mode === 'signup') {
         const { error } = await supabase.auth.signUp({ email, password });
         if (error) throw error;
-        alert('Sikeres regisztráció! Kérlek erősítsd meg az e-mail címed.');
+        alert('Sikeres regisztráció! Kérlek erősítsd meg az e-mail címed (ellenőrizd a spam mappát is!).');
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
       }
     } catch (err: any) {
-      setError(err.message);
+      setError(err.message || 'Hiba történt a hitelesítés során.');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="max-w-md mx-auto mt-20 p-8 bg-white rounded-3xl shadow-2xl border border-slate-100">
+    <div className="max-w-md mx-auto mt-20 p-8 bg-card rounded-3xl shadow-[0_18px_50px_-24px_rgba(16,24,40,0.30)] border border-line">
       <div className="text-center mb-8">
-        <h2 className="text-3xl font-black text-slate-900 mb-2">
-          {mode === 'login' ? 'Üdv újra!' : 'Csatlakozz te is!'}
+        <span className="w-12 h-12 rounded-2xl bg-accent flex items-center justify-center text-white mx-auto mb-4 shadow-[0_8px_18px_-6px_rgba(124,58,237,0.8)]">
+          <Icon name="target" size={24} strokeWidth={2.2} />
+        </span>
+        <h2 className="text-2xl font-bold text-ink font-display mb-1.5">
+          {mode === 'login' ? 'Tippjáték Pro' : 'Csatlakozz te is!'}
         </h2>
-        <p className="text-slate-500 italic">Tippelj és nyerj a VB-n!</p>
+        <p className="text-mid text-xs font-medium uppercase tracking-[0.14em]">
+          {mode === 'login' ? 'Jelentkezz be a baráti játékhoz' : 'Hozz létre egy új fiókot'}
+        </p>
       </div>
 
       <form onSubmit={handleAuth} className="space-y-4">
         {error && (
-          <div className="p-3 bg-red-50 text-red-600 text-sm rounded-lg font-medium">
+          <div className="p-3 bg-red-50 border border-red-200 text-red-600 text-xs rounded-xl font-medium">
             {error}
           </div>
         )}
         
         <div>
-          <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-1 ml-1">
+          <label className="block text-[10px] font-bold text-faint uppercase tracking-[0.14em] mb-1.5 ml-1">
             E-mail
           </label>
           <input
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-emerald-500/10 focus:outline-none focus:border-emerald-500 transition-all"
+            className="w-full p-3.5 bg-wash border border-line2 rounded-2xl focus:ring-4 focus:ring-accent/10 focus:outline-none focus:border-accent text-sm transition-all"
             placeholder="email@pelda.hu"
             required
           />
         </div>
 
         <div>
-          <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-1 ml-1">
+          <label className="block text-[10px] font-bold text-faint uppercase tracking-[0.14em] mb-1.5 ml-1">
             Jelszó
           </label>
           <input
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-emerald-500/10 focus:outline-none focus:border-emerald-500 transition-all"
+            className="w-full p-3.5 bg-wash border border-line2 rounded-2xl focus:ring-4 focus:ring-accent/10 focus:outline-none focus:border-accent text-sm transition-all"
+            placeholder="••••••••"
             required
           />
         </div>
@@ -77,24 +82,24 @@ export function Auth() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full py-4 bg-slate-900 text-white rounded-2xl font-bold flex items-center justify-center gap-2 hover:bg-slate-800 transition-all hover:scale-[1.02] active:scale-95 disabled:bg-slate-300"
+          className="mt-6 w-full py-3.5 rounded-2xl bg-accent text-white font-bold text-[12px] uppercase tracking-[0.14em] flex items-center justify-center gap-2 hover:brightness-105 active:brightness-95 transition-all shadow-[0_12px_28px_-12px_rgba(124,58,237,0.7)] disabled:bg-slate-300 disabled:shadow-none"
         >
           {loading ? (
             <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
           ) : mode === 'login' ? (
-            <>Bejelentkezés <LogIn size={20} /></>
+            <>Bejelentkezés <Icon name="whistle" size={14} /></>
           ) : (
-            <>Regisztráció <UserPlus size={20} /></>
+            <>Regisztráció <Icon name="plus" size={14} /></>
           )}
         </button>
       </form>
 
-      <div className="mt-8 text-center pt-8 border-t border-slate-100">
+      <div className="mt-8 text-center pt-6 border-t border-line">
         <button
           onClick={() => setMode(mode === 'login' ? 'signup' : 'login')}
-          className="text-sm font-bold text-emerald-600 hover:text-emerald-700 underline underline-offset-4"
+          className="text-xs font-bold text-accent hover:text-accent/90 underline underline-offset-4"
         >
-          {mode === 'login' ? 'Még nincs fiókod? Regisztrálj!' : 'Már van fiókod? Jelentkezz be!'}
+          {mode === 'login' ? 'Még nincs fiókod? Hozz létre egyet!' : 'Már van fiókod? Jelentkezz be!'}
         </button>
       </div>
     </div>
