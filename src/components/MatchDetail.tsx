@@ -305,7 +305,7 @@ function FormBlock({ match, stats }: { match: Match; stats: MatchStats }) {
 
 function heatColor(v: number) {
   v = Math.max(0, Math.min(100, v));
-  const blue = [37, 99, 235], purple = [124, 58, 237], red = [220, 38, 38];
+  const blue = [59, 130, 246], purple = [124, 58, 237], red = [239, 68, 68];
   if (v <= 50) return `rgb(${blue[0]},${blue[1]},${blue[2]})`;
   let t = 0;
   let a = blue, b = purple;
@@ -337,7 +337,7 @@ function TempGauge({ value, size = 120 }: { value: number; size?: number }) {
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center leading-none">
         <span className="font-display font-extrabold text-ink" style={{ fontSize: size * 0.33 }}>{value}</span>
-        <span className="font-bold uppercase tracking-[0.1em] mt-1" style={{ fontSize: size * 0.115, color }}>{heatWord(value)}</span>
+        <span className="font-bold uppercase tracking-[0.05em] mt-1" style={{ fontSize: size * 0.085, color }}>{heatWord(value)}</span>
       </div>
     </div>
   );
