@@ -66,19 +66,41 @@ A válaszod KIZÁRÓLAG ez a JSON struktúra legyen, semmi más:
     },
   });
 
-  const text = response.text ?? '';
+  const text = (response.text ?? '').trim();
+
+  if (!text) {
+    throw new Error('Gemini üres választ adott vissza. Ez biztonsági szűrők vagy átmeneti hálózati hiba miatt fordulhat elő.');
+  }
 
   // Parse the JSON response
   let parsed: any;
   try {
     parsed = JSON.parse(text);
-  } catch {
-    // Try to extract JSON from markdown code block
+  } catch (initialErr: any) {
+    // 1. Try to extract JSON from markdown code block
     const jsonMatch = text.match(/```(?:json)?\s*([\s\S]*?)```/);
     if (jsonMatch) {
-      parsed = JSON.parse(jsonMatch[1].trim());
-    } else {
-      throw new Error(`Failed to parse Gemini response as JSON: ${text.substring(0, 200)}`);
+      try {
+        parsed = JSON.parse(jsonMatch[1].trim());
+      } catch (jsonMatchErr) {
+        // Fallback to brace matching
+      }
+    }
+
+    // 2. If still not parsed, find the first '{' and last '}' and parse that substring
+    if (!parsed) {
+      const firstBrace = text.indexOf('{');
+      const lastBrace = text.lastIndexOf('}');
+      if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+        const jsonSubstring = text.substring(firstBrace, lastBrace + 1);
+        try {
+          parsed = JSON.parse(jsonSubstring);
+        } catch (err: any) {
+          throw new Error(`Failed to parse Gemini response as JSON. Error: ${err.message}. Raw text sample: ${text.substring(0, 150)}...`);
+        }
+      } else {
+        throw new Error(`Failed to parse Gemini response as JSON (no curly braces found). Raw text sample: ${text.substring(0, 150)}...`);
+      }
     }
   }
 
