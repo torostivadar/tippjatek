@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Match, Prediction, MatchStats } from '@/src/types';
+import { Match, Prediction, MatchStats, Team } from '@/src/types';
 import { Icon, FlagBadge } from './Icons';
 import { supabase } from '@/src/lib/supabase';
 import { getAbbreviationCode, fmtLong, getGroupTheme } from '@/src/lib/utils';
@@ -128,14 +128,20 @@ function Section({ icon, iconColor, title, subtitle, children }: { icon: string;
   );
 }
 
-function TeamColumn({ country, favoriteTeam }: { country: string; favoriteTeam?: string | null }) {
+function TeamColumn({ country, favoriteTeam, onClick }: { country: string; favoriteTeam?: string | null; onClick?: () => void }) {
   const isFav = favoriteTeam && country === favoriteTeam;
+  const clickable = !!onClick;
   return (
-    <div className="flex-1 w-full flex flex-col items-center gap-2.5">
-      <FlagBadge country={country} size={58} />
+    <div 
+      onClick={onClick}
+      className={`flex-1 w-full flex flex-col items-center gap-2.5 select-none ${clickable ? 'cursor-pointer group' : ''}`}
+    >
+      <div className={clickable ? 'transition-transform group-hover:scale-110 duration-200' : ''}>
+        <FlagBadge country={country} size={58} />
+      </div>
       <span className="flex items-center gap-1.5 justify-center px-1">
         {isFav && <Icon name="star" size={14} fill="#F97316" strokeWidth={0} className="shrink-0" />}
-        <span className="text-base md:text-lg font-bold text-ink text-center font-display leading-tight">{country}</span>
+        <span className={`text-base md:text-lg font-bold text-ink text-center font-display leading-tight ${clickable ? 'group-hover:text-accent transition-colors' : ''}`}>{country}</span>
       </span>
     </div>
   );
@@ -261,19 +267,36 @@ function OddsBlock({ match, stats }: { match: Match; stats: MatchStats }) {
 function H2HBlock({ stats }: { stats: MatchStats }) {
   return (
     <div>
-      <p className="text-[12.5px] text-ink/85 leading-relaxed mb-4 rounded-xl border border-line bg-card p-3.5">{stats.h2hSummary}</p>
-      {stats.h2hHistory.length > 0 && (
+      <p className="text-[12.5px] text-ink/85 leading-relaxed mb-4 rounded-xl border border-line bg-card p-3.5">
+        {stats.h2hSummary || 'Nincs szöveges H2H összefoglaló.'}
+      </p>
+      {stats.h2hHistory && stats.h2hHistory.length > 0 && (
         <div className="space-y-2">
-          {stats.h2hHistory.map((h, i) => (
-            <div key={i} className="flex items-center justify-between rounded-xl border border-line bg-card px-3.5 py-2.5">
-              <span className="font-mono text-[11px] text-faint">{h.year}</span>
-              <span className="font-display text-[13px] font-bold text-ink tracking-wide">{h.res}</span>
-              <span className={`text-[9px] font-bold uppercase tracking-wider px-2 py-1 rounded-md border whitespace-nowrap ${
-                h.winner === 'draw' ? 'bg-wash text-mid border-line' : 'bg-accent/10 text-accent border-accent/25'}`}>
-                {h.winner === 'draw' ? 'Döntetlen' : `${h.winner} győz.`}
-              </span>
-            </div>
-          ))}
+          {stats.h2hHistory.map((h: any, i) => {
+            const displayDate = h.year || h.date || '';
+            const displayRes = h.res || `${h.home} ${h.score} ${h.away}`;
+            
+            let displayWinner = h.winner || 'draw';
+            if (!h.winner && h.score) {
+              const scoreParts = h.score.split('-').map((s: string) => parseInt(s.trim(), 10));
+              if (scoreParts.length === 2) {
+                if (scoreParts[0] > scoreParts[1]) displayWinner = h.home;
+                else if (scoreParts[0] < scoreParts[1]) displayWinner = h.away;
+                else displayWinner = 'draw';
+              }
+            }
+
+            return (
+              <div key={i} className="flex items-center justify-between rounded-xl border border-line bg-card px-3.5 py-2.5">
+                <span className="font-mono text-[11px] text-faint">{displayDate}</span>
+                <span className="font-display text-[13px] font-bold text-ink tracking-wide">{displayRes}</span>
+                <span className={`text-[9px] font-bold uppercase tracking-wider px-2 py-1 rounded-md border whitespace-nowrap ${
+                  displayWinner === 'draw' ? 'bg-wash text-mid border-line' : 'bg-accent/10 text-accent border-accent/25'}`}>
+                  {displayWinner === 'draw' ? 'Döntetlen' : `${displayWinner} győz`}
+                </span>
+              </div>
+            );
+          })}
         </div>
       )}
     </div>
@@ -464,9 +487,11 @@ interface MatchDetailProps {
   prediction?: Prediction;
   onSave: (matchId: string, a: number, b: number, isTuti: boolean) => void;
   favoriteTeam?: string | null;
+  teams?: Team[];
+  onSelectTeam?: (teamId: string) => void;
 }
 
-export function MatchDetail({ match, prediction, onSave, favoriteTeam }: MatchDetailProps) {
+export function MatchDetail({ match, prediction, onSave, favoriteTeam, teams = [], onSelectTeam }: MatchDetailProps) {
   const [a, setA] = useState(prediction?.predicted_a ?? 0);
   const [b, setB] = useState(prediction?.predicted_b ?? 0);
   const [isTuti, setIsTuti] = useState(prediction?.is_tuti ?? false);
@@ -482,13 +507,42 @@ export function MatchDetail({ match, prediction, onSave, favoriteTeam }: MatchDe
     setToast(false);
 
     // Read AI data directly from the match object (cached in matches.ai_data JSONB)
+    let stats: MatchStats | null = null;
     if (match.ai_data) {
-      setDbStats(match.ai_data);
+      stats = match.ai_data as MatchStats;
     } else {
       // Fallback to static mock database for demo/dev
-      setDbStats(MOCK_STATS_DATABASE[match.id] || null);
+      stats = MOCK_STATS_DATABASE[match.id] || null;
     }
-  }, [prediction, match.id, match.ai_data]);
+
+    if (stats) {
+      // Overwrite with centralized team details if available for consistency
+      const teamAObj = teams.find(t => t.name === match.team_a);
+      const teamBObj = teams.find(t => t.name === match.team_b);
+
+      const updatedStats = { ...stats };
+      
+      if (teamAObj) {
+        updatedStats.teamA = {
+          ...updatedStats.teamA,
+          temp: teamAObj.temperature ?? updatedStats.teamA?.temp ?? 50,
+          injuries: teamAObj.injuries ?? updatedStats.teamA?.injuries ?? [],
+          form: (teamAObj.form as any) ?? updatedStats.teamA?.form ?? []
+        };
+      }
+      if (teamBObj) {
+        updatedStats.teamB = {
+          ...updatedStats.teamB,
+          temp: teamBObj.temperature ?? updatedStats.teamB?.temp ?? 50,
+          injuries: teamBObj.injuries ?? updatedStats.teamB?.injuries ?? [],
+          form: (teamBObj.form as any) ?? updatedStats.teamB?.form ?? []
+        };
+      }
+      setDbStats(updatedStats);
+    } else {
+      setDbStats(null);
+    }
+  }, [prediction, match.id, match.ai_data, teams]);
 
   const isFinished = match.status === 'FINISHED';
   const isTBD = 
@@ -550,10 +604,35 @@ export function MatchDetail({ match, prediction, onSave, favoriteTeam }: MatchDe
         </span>
       </div>
 
+      {/* Venue & TV Channel Bar */}
+      {(match.tv_channel || match.venue_name) && (
+        <div className="px-6 md:px-8 py-2.5 bg-slate-50 border-b border-line flex flex-wrap gap-4 text-xs font-semibold text-mid">
+          {match.tv_channel && (
+            <span className="flex items-center gap-1.5">
+              <Icon name="target" size={13} className="text-indigo-500" />
+              <span>Közvetítés: <strong className="text-ink">{match.tv_channel}</strong></span>
+            </span>
+          )}
+          {match.venue_name && (
+            <span className="flex items-center gap-1.5">
+              <Icon name="star" size={13} className="text-rose-500" />
+              <span>Helyszín: <strong className="text-ink">{match.venue_name}</strong>{match.venue_city ? `, ${match.venue_city}` : ''}{match.venue_capacity ? ` (${match.venue_capacity.toLocaleString()} fő)` : ''}</span>
+            </span>
+          )}
+        </div>
+      )}
+
       {/* 2. Stepper and prediction input */}
       <div className="px-6 md:px-8 py-7 border-b border-line">
         <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-          <TeamColumn country={match.team_a} favoriteTeam={favoriteTeam} />
+          <TeamColumn 
+            country={match.team_a} 
+            favoriteTeam={favoriteTeam} 
+            onClick={() => {
+              const teamObj = teams.find(t => t.name === match.team_a);
+              if (teamObj && onSelectTeam) onSelectTeam(teamObj.id);
+            }}
+          />
 
           <div className="flex flex-col items-center gap-4 min-w-[210px]">
             <div className="flex items-center gap-4">
@@ -594,7 +673,14 @@ export function MatchDetail({ match, prediction, onSave, favoriteTeam }: MatchDe
             )}
           </div>
 
-          <TeamColumn country={match.team_b} favoriteTeam={favoriteTeam} />
+          <TeamColumn 
+            country={match.team_b} 
+            favoriteTeam={favoriteTeam} 
+            onClick={() => {
+              const teamObj = teams.find(t => t.name === match.team_b);
+              if (teamObj && onSelectTeam) onSelectTeam(teamObj.id);
+            }}
+          />
         </div>
 
         {/* TUTI TIPP Toggle */}

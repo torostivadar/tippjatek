@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/src/lib/supabase';
-import { Match, Prediction, Profile, MatchStats } from '@/src/types';
+import { Match, Prediction, Profile, MatchStats, Team } from '@/src/types';
 import { User } from '@supabase/supabase-js';
 
 export function useApp() {
@@ -11,6 +11,7 @@ export function useApp() {
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [eliminatedTeams, setEliminatedTeams] = useState<string[]>([]);
   const [activeTab, setActiveTab] = useState<'matches' | 'leaderboard' | 'groups' | 'rules'>('matches');
+  const [teams, setTeams] = useState<Team[]>([]);
 
   // Load User Auth Session
   useEffect(() => {
@@ -91,6 +92,14 @@ export function useApp() {
       
       setEliminatedTeams((eliminatedData || []).map(x => x.team_name));
 
+      // 6. Fetch teams
+      const { data: teamData } = await supabase
+        .from('teams')
+        .select('*')
+        .order('name', { ascending: true });
+      
+      setTeams(teamData || []);
+
       // Trigger background API sync (on-demand / lazy sync)
       fetch('/api/cron/update-live').catch(err => console.error('On-demand sync error:', err));
 
@@ -144,10 +153,25 @@ export function useApp() {
       })
       .subscribe();
 
+    // Listen to teams
+    const teamsChannel = supabase
+      .channel('realtime-teams')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'teams' }, (payload) => {
+        if (payload.eventType === 'UPDATE') {
+          const updated = payload.new as Team;
+          setTeams(prev => prev.map(t => t.id === updated.id ? updated : t));
+        } else if (payload.eventType === 'INSERT') {
+          const inserted = payload.new as Team;
+          setTeams(prev => [...prev, inserted].sort((a, b) => a.name.localeCompare(b.name, 'hu')));
+        }
+      })
+      .subscribe();
+
     return () => {
       supabase.removeChannel(matchesChannel);
       supabase.removeChannel(profilesChannel);
       supabase.removeChannel(eliminatedChannel);
+      supabase.removeChannel(teamsChannel);
     };
   }, [user]);
 
@@ -320,6 +344,7 @@ export function useApp() {
     saveChampionPrediction,
     changeUsername,
     changeAvatar,
-    submitCrossroadsChoice
+    submitCrossroadsChoice,
+    teams
   };
 }

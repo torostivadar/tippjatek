@@ -9,9 +9,10 @@ const genAI = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || '' });
  */
 export async function generateMatchAIData(
   teamA: string,
-  teamB: string
+  teamB: string,
+  apiKey?: string
 ): Promise<MatchStats> {
-  const prompt = `Használd a Google Keresést! Nézz utána a legfrissebb híreknek a ${teamA} - ${teamB} 2026-os labdarúgó világbajnokság meccsel kapcsolatban.
+  const prompt = `Használd a Google Keresést! Nézz utána a legfrissebb híreknek a ${teamA} és ${teamB} közötti 2026-os labdarúgó-világbajnoki mérkőzéssel kapcsolatban.
 
 Töltsd fel az alábbi JSON struktúrát valós, friss adatokkal, KIZÁRÓLAG magyar nyelven!
 
@@ -57,14 +58,27 @@ A válaszod KIZÁRÓLAG ez a JSON struktúra legyen, semmi más:
   ]
 }`;
 
-  const response = await genAI.models.generateContent({
-    model: 'gemini-2.5-flash',
-    contents: prompt,
-    config: {
-      tools: [{ googleSearch: {} }],
-      temperature: 0.7,
-    },
-  });
+  const client = apiKey ? new GoogleGenAI({ apiKey }) : genAI;
+  let response;
+  try {
+    response = await client.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: prompt,
+      config: {
+        tools: [{ googleSearch: {} }],
+        temperature: 0.7,
+      },
+    });
+  } catch (err: any) {
+    console.warn(`⚠️ Gemini Search Grounding failed: ${err.message || err}. Retrying WITHOUT Search Grounding...`);
+    response = await client.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: prompt,
+      config: {
+        temperature: 0.7,
+      },
+    });
+  }
 
   const text = (response.text ?? '').trim();
 

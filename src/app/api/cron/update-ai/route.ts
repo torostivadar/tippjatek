@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/src/db';
-import { matches } from '@/src/db/schema';
-import { and, gte, lte, sql, isNull, or } from 'drizzle-orm';
+import { matches, teams as teamsTable } from '@/src/db/schema';
+import { and, gte, lte, sql } from 'drizzle-orm';
 import { generateMatchAIData } from '@/src/lib/geminiService';
 
 /**
@@ -91,6 +91,118 @@ export async function GET(req: NextRequest) {
       } catch (err: any) {
         console.error(`✗ Error generating AI data for match #${match.id}:`, err.message);
         errors.push(`Match #${match.id}: ${err.message}`);
+      }
+    }
+
+    // 5. Update teams table with new averages and stats
+    if (updatedCount > 0) {
+      console.log('Recalculating team averages and updating teams table...');
+      try {
+        const allMatches = await db.select().from(matches);
+        
+        // Find valid teams in database
+        const teamNames = new Set<string>();
+        for (const m of allMatches) {
+          if (m.team_a && !m.team_a.includes('/') && !m.team_a.startsWith('W-') && !m.team_a.startsWith('L-')) {
+            teamNames.add(m.team_a);
+          }
+          if (m.team_b && !m.team_b.includes('/') && !m.team_b.startsWith('W-') && !m.team_b.startsWith('L-')) {
+            teamNames.add(m.team_b);
+          }
+        }
+
+        const existingTeams = await db.select().from(teamsTable);
+        const nameToTeam = new Map(existingTeams.map(t => [t.name, t]));
+
+        for (const teamName of teamNames) {
+          const teamObj = nameToTeam.get(teamName);
+          if (!teamObj) continue;
+
+          // Compute AI stats
+          let tempSum = 0;
+          let attackSum = 0;
+          let defenseSum = 0;
+          let count = 0;
+          let firstMatchId = null as number | null;
+          let firstMatchAiData = null as any;
+
+          for (const m of allMatches) {
+            const aiData = m.ai_data as any;
+            if (!aiData) continue;
+
+            const mIdNum = parseInt(m.id, 10);
+            
+            if (m.team_a === teamName) {
+              const temp = aiData.teamA?.temp;
+              const attack = aiData.prediction?.attackA;
+              const defense = aiData.prediction?.defenseA;
+              if (temp !== undefined) tempSum += temp;
+              if (attack !== undefined) attackSum += attack;
+              if (defense !== undefined) defenseSum += defense;
+              count++;
+
+              if (firstMatchId === null || mIdNum < firstMatchId) {
+                firstMatchId = mIdNum;
+                firstMatchAiData = { role: 'A', data: aiData };
+              }
+            } else if (m.team_b === teamName) {
+              const temp = aiData.teamB?.temp;
+              const attack = aiData.prediction?.attackB;
+              const defense = aiData.prediction?.defenseB;
+              if (temp !== undefined) tempSum += temp;
+              if (attack !== undefined) attackSum += attack;
+              if (defense !== undefined) defenseSum += defense;
+              count++;
+
+              if (firstMatchId === null || mIdNum < firstMatchId) {
+                firstMatchId = mIdNum;
+                firstMatchAiData = { role: 'B', data: aiData };
+              }
+            }
+          }
+
+          if (count > 0) {
+            const temperature = Math.round(tempSum / count);
+            const attack_rating = Math.round(attackSum / count);
+            const defense_rating = Math.round(defenseSum / count);
+            
+            let injuries: string[] = [];
+            let news: any[] = [];
+
+            if (firstMatchAiData) {
+              const { role, data } = firstMatchAiData;
+              const teamKey = role === 'A' ? 'teamA' : 'teamB';
+              injuries = data[teamKey]?.injuries || [];
+
+              const rawNews = data.news || [];
+              news = rawNews.filter((item: any) => {
+                if (!item.text) return false;
+                const textLower = item.text.toLowerCase();
+                return textLower.includes(teamName.toLowerCase()) || 
+                       (teamObj.name_en && textLower.includes(teamObj.name_en.toLowerCase()));
+              });
+
+              if (news.length === 0 && rawNews.length > 0) {
+                news = [rawNews[0]];
+              }
+            }
+
+            await db.update(teamsTable)
+              .set({
+                temperature,
+                attack_rating,
+                defense_rating,
+                injuries,
+                news,
+                updated_at: new Date()
+              })
+              .where(sql`${teamsTable.id} = ${teamObj.id}`);
+          }
+        }
+        console.log('✅ Team averages updated successfully.');
+      } catch (err: any) {
+        console.error('Error recalculating team averages:', err.message);
+        errors.push(`Team recalculation: ${err.message}`);
       }
     }
 

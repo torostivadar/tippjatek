@@ -9,6 +9,26 @@ export interface Match {
   group: string;
   ai_data?: MatchStats | null;
   last_ai_updated?: string | null;
+  tv_channel?: string | null;
+  venue_name?: string | null;
+  venue_city?: string | null;
+  venue_capacity?: number | null;
+}
+
+export interface Team {
+  id: string;
+  name: string;
+  name_en?: string | null;
+  group_letter?: string | null;
+  fifa_ranking?: number | null;
+  fifa_points?: string | null;
+  form?: string[] | null;
+  attack_rating?: number | null;
+  defense_rating?: number | null;
+  temperature?: number | null;
+  injuries?: string[] | null;
+  news?: { text: string; source?: string; url?: string }[] | null;
+  updated_at?: string;
 }
 
 export interface Prediction {

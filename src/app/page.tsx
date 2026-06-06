@@ -10,6 +10,8 @@ import { Auth } from '@/src/components/Auth';
 import { Icon } from '@/src/components/Icons';
 import { Rules } from '@/src/components/Rules';
 import { CrossroadsModal } from '@/src/components/CrossroadsModal';
+import { Groups } from '@/src/components/Groups';
+import { TeamProfile } from '@/src/components/TeamProfile';
 
 // Full list of 48 teams in the World Cup
 const TEAMS_LIST = [
@@ -40,11 +42,13 @@ export default function Home() {
     saveChampionPrediction,
     changeUsername,
     changeAvatar,
-    submitCrossroadsChoice
+    submitCrossroadsChoice,
+    teams
   } = useApp();
 
   const [selectedMatchId, setSelectedMatchId] = useState<string>('1');
   const [favoriteModalOpen, setFavoriteModalOpen] = useState(false);
+  const [selectedTeamId, setSelectedTeamId] = useState<string | null>(null);
 
   // Set default selected match once matches load
   useEffect(() => {
@@ -133,6 +137,7 @@ export default function Home() {
 
   const selectedMatch = matches.find(m => m.id === selectedMatchId) || matches[0];
   const selectedPrediction = predictions.find(p => p.match_id === selectedMatchId);
+  const selectedTeam = teams.find(t => t.id === selectedTeamId);
 
   const openTipsCount = matches.filter(m => {
     const isFinished = m.status === 'FINISHED';
@@ -223,6 +228,8 @@ export default function Home() {
                   prediction={selectedPrediction}
                   onSave={savePrediction}
                   favoriteTeam={currentProfile?.favorite_team}
+                  teams={teams}
+                  onSelectTeam={setSelectedTeamId}
                 />
               ) : (
                 <div className="rounded-3xl border border-line bg-card p-10 text-center text-faint italic shadow-[0_18px_50px_-24px_rgba(16,24,40,0.30)]">
@@ -242,17 +249,13 @@ export default function Home() {
           </div>
         )}
 
-        {/* 3. GROUPS TAB (Hamarosan...) */}
+        {/* 3. GROUPS TAB */}
         {activeTab === 'groups' && (
-          <div className="max-w-2xl mx-auto rounded-3xl border border-line bg-card p-10 text-center shadow-[0_18px_50px_-24px_rgba(16,24,40,0.30)]">
-            <span className="w-16 h-16 rounded-full bg-accent/10 flex items-center justify-center text-accent mx-auto mb-5 border border-accent/20">
-              <Icon name="calendar" size={28} className="text-accent animate-pulse" />
-            </span>
-            <h2 className="text-xl font-bold text-ink font-display mb-2">Csoportbeosztás & Ágrajz</h2>
-            <p className="text-mid text-[13.5px] max-w-md mx-auto leading-relaxed">
-              Hamarosan! A csoportok aktuális állása és az egyenes kieséses szakasz élő ágrajza a csoportkör meccseinek előrehaladtával itt fog megjelenni dinamikusan.
-            </p>
-          </div>
+          <Groups 
+            teams={teams}
+            matches={matches}
+            onSelectTeam={setSelectedTeamId}
+          />
         )}
 
         {/* 4. RULES TAB */}
@@ -260,6 +263,13 @@ export default function Home() {
           <Rules />
         )}
       </main>
+
+      {selectedTeam && (
+        <TeamProfile 
+          team={selectedTeam}
+          onClose={() => setSelectedTeamId(null)}
+        />
+      )}
     </div>
   );
 }
