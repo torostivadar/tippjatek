@@ -23,7 +23,7 @@ FONTOS SZABÁLYOK:
 - A "team_temperature" mezőben a csapat aktuális formaindexét adj (0-100), ahol 0 a legrosszabb, 100 a legjobb.
 - A "form_last_5" mezőben az utolsó 5 mérkőzés eredményét add meg W (win), D (draw), L (loss) betűkkel, időrendi sorrendben (legrégebbitől a legfrissebbig).
 - A "missing_players" mezőben a sérült vagy eltiltott játékosok neveit add meg.
-- A "press_news" mezőben 2-4 friss sajtóhírt, edzői nyilatkozatot adj.
+- A "press_news" mezőben 2-4 friss sajtóhírt, edzői nyilatkozatot adj. Minden hírhez kötelezően mellékeld az eredeti cikk forrásának nevét (source) és közvetlen webcímét (url) is a Google Keresés eredményeiből!
 - Az "expert_advice" mezőben adj egy 2-3 mondatos, megalapozott szakértői elemzést.
 
 A válaszod KIZÁRÓLAG ez a JSON struktúra legyen, semmi más:
@@ -49,8 +49,11 @@ A válaszod KIZÁRÓLAG ez a JSON struktúra legyen, semmi más:
     "away": ["<név1>", "<név2>"]
   },
   "press_news": [
-    "<hír1>",
-    "<hír2>"
+    {
+      "text": "<hír szövege>",
+      "source": "<forrásportál neve, pl. Nemzeti Sport>",
+      "url": "<közvetlen forrás link a keresési találatból>"
+    }
   ]
 }`;
 
@@ -144,7 +147,18 @@ function mapGeminiToMatchStats(data: any, teamA: string, teamB: string): MatchSt
       draw: odds.draw ?? 3.40,
       winB: odds.away ?? 2.50,
     },
-    news: Array.isArray(news) ? news : [],
+    news: Array.isArray(news)
+      ? news.map((item: any) => {
+          if (typeof item === 'string') {
+            return { text: item };
+          }
+          return {
+            text: item?.text || item?.headline || '',
+            url: item?.url || item?.source_url || undefined,
+            source: item?.source || item?.source_name || undefined,
+          };
+        })
+      : [],
   };
 }
 

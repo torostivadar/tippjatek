@@ -63,5 +63,5 @@ export interface MatchStats {
     draw: number;
     winB: number;
   };
-  news: string[];
+  news: { text: string; url?: string; source?: string }[];
 }

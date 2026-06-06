@@ -18,7 +18,10 @@ const MOCK_STATS_DATABASE: Record<string, MatchStats> = {
     teamB: { form: ['W', 'W', 'D', 'W', 'W'], temp: 94, injuries: ['Serge Gnabry', 'Leroy Sané'] },
     prediction: { winA: 18, draw: 27, winB: 55, advice: "Németország hazai környezetben esélyes, de a fegyelmezett magyar védekezés szoros meccset hozhat.", attackA: 68, attackB: 89, defenseA: 78, defenseB: 82 },
     odds: { winA: 4.90, draw: 3.85, winB: 1.62 },
-    news: ["Rossi: 'A fegyelmezettség a kulcs.'", "Nagelsmann: 'Mindig szenvedünk Rossi csapata ellen.'"]
+    news: [
+      { text: "Rossi: 'A fegyelmezettség a kulcs.'", source: "Nemzeti Sport", url: "https://www.nemzetisport.hu" },
+      { text: "Nagelsmann: 'Mindig szenvedünk Rossi csapata ellen.'", source: "Telex", url: "https://telex.hu" }
+    ]
   },
   '2': {
     h2hSummary: "Kiegyenlített rangadó. Az utolsó 3 találkozásból 1 francia, 1 brazil győzelem és 1 döntetlen.",
@@ -30,7 +33,10 @@ const MOCK_STATS_DATABASE: Record<string, MatchStats> = {
     teamB: { form: ['W', 'L', 'W', 'W', 'D'], temp: 78, injuries: ['Lucas Hernandez'] },
     prediction: { winA: 42, draw: 24, winB: 34, advice: "Igazi döntőnek beillő rangadó. Mindkét csapat rendkívül kreatív elöl, gólváltás várható.", attackA: 92, attackB: 88, defenseA: 75, defenseB: 80 },
     odds: { winA: 2.25, draw: 3.40, winB: 2.65 },
-    news: ["Mbappé maszkban lép pályára.", "Vinícius Jr. szabadrúgás-párbajjal hangolt."]
+    news: [
+      { text: "Mbappé maszkban lép pályára.", source: "L'Équipe", url: "https://www.lequipe.fr" },
+      { text: "Vinícius Jr. szabadrúgás-párbajjal hangolt.", source: "Globo Esporte", url: "https://ge.globo.com" }
+    ]
   }
 };
 
@@ -386,16 +392,61 @@ function InjuriesBlock({ match, stats }: { match: Match; stats: MatchStats }) {
 }
 
 function NewsBlock({ stats }: { stats: MatchStats }) {
+  const getDomain = (url: string) => {
+    try {
+      return new URL(url).hostname.replace('www.', '');
+    } catch {
+      return 'Forrás';
+    }
+  };
+
   return (
     <div className="space-y-2.5">
-      {stats.news.map((n, i) => (
-        <div key={i} className="flex gap-3 rounded-2xl border border-line bg-card p-3.5">
-          <span className="w-8 h-8 rounded-full bg-wash border border-line flex items-center justify-center shrink-0">
-            <Icon name="newspaper" size={13} className="text-mid" />
-          </span>
-          <p className="text-[12.5px] text-ink/85 leading-relaxed">{n}</p>
-        </div>
-      ))}
+      {stats.news.map((n, i) => {
+        const sourceName = n.source || (n.url ? getDomain(n.url) : null);
+        return (
+          <div key={i} className="flex gap-3 rounded-2xl border border-line bg-card p-3.5 items-start">
+            <span className="w-8 h-8 rounded-full bg-wash border border-line flex items-center justify-center shrink-0 mt-0.5">
+              <Icon name="newspaper" size={13} className="text-mid" />
+            </span>
+            <div className="flex flex-col gap-1 leading-relaxed">
+              <p className="text-[12.5px] text-ink/85">{n.text}</p>
+              {sourceName && (
+                <div className="flex items-center gap-1 mt-0.5">
+                  {n.url ? (
+                    <a
+                      href={n.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 text-[10.5px] font-bold text-accent hover:underline"
+                    >
+                      <span>Forrás: {sourceName}</span>
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="10"
+                        height="10"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        className="inline-block shrink-0"
+                      >
+                        <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14L21 3" />
+                      </svg>
+                    </a>
+                  ) : (
+                    <span className="text-[10.5px] font-bold text-faint">
+                      Forrás: {sourceName}
+                    </span>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 }
