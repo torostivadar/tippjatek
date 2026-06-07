@@ -48,6 +48,7 @@ export function Navigation({
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
   const [editName, setEditName] = useState(username || '');
   const [saving, setSaving] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const isBeforeTournamentStart = new Date() < new Date('2026-06-11T19:00:00Z');
   return (
     <nav className="fixed top-0 inset-x-0 h-16 z-50 px-4 md:px-6 flex items-center justify-between border-b border-line bg-card/85 backdrop-blur-xl">
@@ -61,7 +62,8 @@ export function Navigation({
         </div>
       </div>
 
-      <div className="flex items-center gap-1.5">
+      {/* Desktop navigation tabs */}
+      <div className="hidden md:flex items-center gap-1.5">
         <button
           onClick={() => setActiveTab('matches')}
           className={`px-4 py-2 rounded-xl text-[11px] font-bold uppercase tracking-[0.15em] transition-all duration-200 flex items-center gap-2
@@ -116,7 +118,8 @@ export function Navigation({
           <span className="font-mono text-[10px] font-bold text-mid tracking-wide">VB 2026</span>
         </span>
         
-        <div className="relative">
+        {/* Desktop Profile Dropdown */}
+        <div className="relative hidden md:block">
           <button
             onClick={() => {
               setEditName(username || '');
@@ -275,7 +278,177 @@ export function Navigation({
             </>
           )}
         </div>
+
+        {/* Mobile Hamburger Menu Button */}
+        <button
+          onClick={() => {
+            setEditName(username || '');
+            setMobileMenuOpen(!mobileMenuOpen);
+          }}
+          className="md:hidden w-10 h-10 rounded-xl border border-line bg-card flex items-center justify-center text-mid hover:text-ink hover:bg-wash hover:scale-105 transition-all shadow-[0_1px_2px_rgba(16,24,40,0.04)] cursor-pointer"
+          title="Menü"
+        >
+          <Icon name={mobileMenuOpen ? 'x' : 'menu'} size={18} strokeWidth={2.4} />
+        </button>
       </div>
+
+      {/* Mobile Slide-out Menu Drawer */}
+      {mobileMenuOpen && (
+        <>
+          {/* Backdrop */}
+          <div 
+            className="fixed inset-0 top-16 bg-slate-900/60 backdrop-blur-sm z-40 md:hidden animate-in fade-in duration-200"
+            onClick={() => setMobileMenuOpen(false)}
+          />
+          {/* Drawer Menu */}
+          <div className="fixed top-16 right-0 bottom-0 w-80 max-w-[85vw] bg-white border-l border-line shadow-[-10px_0_30px_rgba(16,24,40,0.08)] z-50 p-5 overflow-y-auto flex flex-col md:hidden animate-in slide-in-from-right duration-300">
+            {/* Navigation tabs */}
+            <div className="space-y-2.5 pb-5 border-b border-line shrink-0">
+              <span className="block text-[9.5px] font-bold uppercase tracking-[0.12em] text-faint mb-2">Navigáció</span>
+              {[
+                { tab: 'matches' as const, label: 'Mérkőzések', icon: 'whistle' },
+                { tab: 'leaderboard' as const, label: 'Ranglista', icon: 'trophy' },
+                { tab: 'groups' as const, label: 'Csoportok', icon: 'calendar' },
+                { tab: 'rules' as const, label: 'Játékszabály', icon: 'newspaper' }
+              ].map((item) => {
+                const isActive = activeTab === item.tab;
+                return (
+                  <button
+                    key={item.tab}
+                    onClick={() => {
+                      setActiveTab(item.tab);
+                      setMobileMenuOpen(false);
+                    }}
+                    className={`w-full px-4 py-3 rounded-xl text-[11px] font-bold uppercase tracking-[0.15em] transition-all flex items-center gap-3 cursor-pointer
+                      ${isActive 
+                        ? 'bg-accent text-white shadow-[0_8px_20px_-8px_rgba(124,58,237,0.7)]' 
+                        : 'text-mid hover:text-ink hover:bg-wash'}`}
+                  >
+                    <Icon name={item.icon} size={14} strokeWidth={2.4} />
+                    <span>{item.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Profile Settings */}
+            <div className="pt-5 flex-1 space-y-4">
+              <span className="block text-[9.5px] font-bold uppercase tracking-[0.12em] text-faint mb-2">Profil & Beállítások</span>
+              
+              {/* Nickname */}
+              <div>
+                <label className="block text-[9.5px] font-bold uppercase tracking-[0.12em] text-faint mb-1.5">Becenév</label>
+                <div className="flex gap-1.5">
+                  <input
+                    type="text"
+                    value={editName}
+                    onChange={(e) => setEditName(e.target.value)}
+                    className="flex-1 bg-wash border border-line2 rounded-xl px-3 py-1.5 text-xs font-semibold text-ink focus:outline-none focus:border-accent"
+                    placeholder="Megjelenített név"
+                    disabled={saving}
+                  />
+                  <button
+                    onClick={async () => {
+                      if (!editName.trim()) return;
+                      setSaving(true);
+                      await onChangeUsername?.(editName);
+                      setSaving(false);
+                    }}
+                    disabled={saving || editName.trim() === username}
+                    className="bg-accent text-white text-xs font-bold px-3 py-1.5 rounded-xl transition-all disabled:opacity-40 cursor-pointer"
+                  >
+                    Mentés
+                  </button>
+                </div>
+              </div>
+
+              {/* Avatar selection grid */}
+              <div>
+                <label className="block text-[9.5px] font-bold uppercase tracking-[0.12em] text-faint mb-1.5 font-display">Avatar választása</label>
+                <div className="grid grid-cols-5 gap-1.5 bg-wash border border-line rounded-xl p-2">
+                  {AVATARS_LIST.map((emoji) => {
+                    const isSelected = avatar === emoji;
+                    return (
+                      <button
+                        key={emoji}
+                        type="button"
+                        onClick={() => onChangeAvatar?.(emoji)}
+                        className={`w-9 h-9 rounded-lg border flex items-center justify-center text-[19px] transition-all cursor-pointer select-none
+                          ${isSelected 
+                            ? 'bg-accent/10 border-accent scale-105 shadow-[0_2px_8px_-2px_rgba(124,58,237,0.4)]' 
+                            : 'bg-white border-line hover:bg-wash'}`}
+                      >
+                        {emoji}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Favorite Team */}
+              <div>
+                <label className="block text-[9.5px] font-bold uppercase tracking-[0.12em] text-faint mb-1.5">Kedvenc csapat (Fan Factor)</label>
+                {isBeforeTournamentStart ? (
+                  <select
+                    value={favoriteTeam || ''}
+                    onChange={(e) => onSelectFavoriteTeam?.(e.target.value)}
+                    className="w-full bg-wash border border-line2 rounded-xl px-3 py-2 text-xs font-semibold text-ink focus:outline-none focus:border-accent cursor-pointer"
+                  >
+                    <option value="">-- Válassz kedvencet --</option>
+                    {TEAMS_LIST.map((t) => (
+                      <option key={t} value={t}>{t}</option>
+                    ))}
+                  </select>
+                ) : (
+                  favoriteTeam && (
+                    <div className="bg-orange-50 border border-orange-100 rounded-xl p-2.5 flex items-center justify-between">
+                      <span className="font-display text-xs font-bold text-ink truncate">{favoriteTeam}</span>
+                      <span className="w-6 h-6 rounded-md bg-orange-100 flex items-center justify-center shrink-0">
+                        <Icon name="star" size={12} fill="#F97316" strokeWidth={0} />
+                      </span>
+                    </div>
+                  )
+                )}
+              </div>
+
+              {/* Champion Prediction */}
+              <div>
+                <label className="block text-[9.5px] font-bold uppercase tracking-[0.12em] text-faint mb-1.5">Világbajnok tipp</label>
+                {isBeforeTournamentStart ? (
+                  <select
+                    value={championPrediction || ''}
+                    onChange={(e) => onSaveChampionPrediction?.(e.target.value)}
+                    className="w-full bg-wash border border-line2 rounded-xl px-3 py-2 text-xs font-semibold text-ink focus:outline-none focus:border-accent cursor-pointer"
+                  >
+                    <option value="">-- Válassz világbajnokot --</option>
+                    {TEAMS_LIST.map((t) => (
+                      <option key={t} value={t}>{t}</option>
+                    ))}
+                  </select>
+                ) : (
+                  <div className="bg-purple-50 border border-purple-100 rounded-xl p-2.5 flex items-center justify-between">
+                    <span className="font-display text-xs font-bold text-ink truncate">
+                      {championPrediction || 'Nem tippeltél időben'}
+                    </span>
+                    <span className="w-6 h-6 rounded-md bg-purple-100 flex items-center justify-center shrink-0">
+                      <Icon name="sparkles" size={12} className="text-accent" />
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              {/* Sign out */}
+              <button
+                onClick={() => supabase.auth.signOut()}
+                className="w-full border border-line hover:bg-rose-50 hover:text-rose-600 hover:border-rose-100 text-mid text-xs font-bold py-2 rounded-xl transition-colors flex items-center justify-center gap-2 cursor-pointer mt-4"
+              >
+                <Icon name="logout" size={14} strokeWidth={2.2} />
+                Kijelentkezés
+              </button>
+            </div>
+          </div>
+        </>
+      )}
     </nav>
   );
 }

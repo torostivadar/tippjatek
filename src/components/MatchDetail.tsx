@@ -706,63 +706,128 @@ export function MatchDetail({ match, prediction, onSave, favoriteTeam, teams = [
       {/* 2. Stepper and prediction input */}
       <div className="px-6 md:px-8 py-7 border-b border-line">
         <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-          <TeamColumn 
-            country={match.team_a} 
-            favoriteTeam={favoriteTeam} 
-            onClick={() => {
-              const teamObj = teams.find(t => t.name === match.team_a);
-              if (teamObj && onSelectTeam) onSelectTeam(teamObj.id);
-            }}
-          />
+          
+          {/* Mobile-only layout: Teams side-by-side, inputs below */}
+          <div className="flex flex-col items-center gap-4 w-full md:hidden">
+            {/* Top row: Teams side-by-side */}
+            <div className="flex items-center justify-between w-full max-w-[280px]">
+              {/* Team A */}
+              <div 
+                onClick={() => {
+                  const teamObj = teams.find(t => t.name === match.team_a);
+                  if (teamObj && onSelectTeam) onSelectTeam(teamObj.id);
+                }}
+                className="flex flex-col items-center gap-1.5 cursor-pointer group"
+              >
+                <FlagBadge country={match.team_a} size={42} />
+                <span className="font-display text-[12px] font-bold text-ink leading-tight text-center px-1 flex items-center gap-0.5">
+                  {match.team_a}
+                  {!!(favoriteTeam && match.team_a === favoriteTeam) && <Icon name="star" size={9} fill={FAV_COLOR} strokeWidth={0} className="shrink-0" />}
+                </span>
+              </div>
 
-          <div className="flex flex-col items-center gap-4 min-w-[210px]">
-            <div className="flex items-center gap-4">
+              {/* VS */}
+              <span className="font-mono text-[10px] font-bold text-faint uppercase tracking-wider">vs</span>
+
+              {/* Team B */}
+              <div 
+                onClick={() => {
+                  const teamObj = teams.find(t => t.name === match.team_b);
+                  if (teamObj && onSelectTeam) onSelectTeam(teamObj.id);
+                }}
+                className="flex flex-col items-center gap-1.5 cursor-pointer group"
+              >
+                <FlagBadge country={match.team_b} size={42} />
+                <span className="font-display text-[12px] font-bold text-ink leading-tight text-center px-1 flex items-center gap-0.5">
+                  {match.team_b}
+                  {!!(favoriteTeam && match.team_b === favoriteTeam) && <Icon name="star" size={9} fill={FAV_COLOR} strokeWidth={0} className="shrink-0" />}
+                </span>
+              </div>
+            </div>
+
+            {/* Bottom row: Stepper / score inputs */}
+            <div className="flex items-center gap-4 py-1">
               {isFinished ? (
                 <>
                   <ScoreChip value={match.score_a ?? 0} win={(match.score_a ?? 0) > (match.score_b ?? 0)} />
-                  <span className="text-faint font-display font-bold text-2xl">:</span>
+                  <span className="text-faint font-display font-bold text-xl">:</span>
                   <ScoreChip value={match.score_b ?? 0} win={(match.score_b ?? 0) > (match.score_a ?? 0)} />
                 </>
               ) : isTBD ? (
-                <div className="flex flex-col items-center gap-2 py-3">
-                  <span className="w-14 h-14 rounded-full bg-amber-50 border border-dashed border-amber-300 flex items-center justify-center text-amber-500 animate-pulse">
-                    <Icon name="lock" size={20} />
-                  </span>
-                  <span className="text-[10px] font-bold text-amber-600 uppercase tracking-[0.16em]">Lezárva</span>
-                </div>
+                <span className="text-[10px] font-bold text-amber-600 uppercase tracking-[0.16em]">Lezárva</span>
               ) : (
                 <>
                   <ScoreStepper value={a} onAdd={() => adjust('a', 1)} onSub={() => adjust('a', -1)} />
-                  <span className="text-faint font-display font-bold text-2xl mt-[-6px]">:</span>
+                  <span className="text-faint font-display font-bold text-xl mt-[-6px]">:</span>
                   <ScoreStepper value={b} onAdd={() => adjust('b', 1)} onSub={() => adjust('b', -1)} />
                 </>
               )}
             </div>
-
-            {!isTBD && (
-              <div className="text-center min-h-[44px] flex flex-col items-center justify-center gap-2">
-                {isFinished ? (
-                  <SavedTipChip label="Tipped" value={`${a} - ${b} ${prediction?.is_tuti ? '⭐️' : ''}`} tone="neutral" />
-                ) : prediction ? (
-                  <SavedTipChip label="Mentett tipped" value={`${prediction.predicted_a} - ${prediction.predicted_b} ${prediction.is_tuti ? '⭐️' : ''}`} tone="accent" />
-                ) : (
-                  <span className="text-[12px] font-semibold text-rose-600 bg-rose-50 border border-rose-200 px-3 py-1.5 rounded-full animate-pulse">
-                    Még nem tippeltél — állítsd be fent a gólokat.
-                  </span>
-                )}
-              </div>
-            )}
           </div>
 
-          <TeamColumn 
-            country={match.team_b} 
-            favoriteTeam={favoriteTeam} 
-            onClick={() => {
-              const teamObj = teams.find(t => t.name === match.team_b);
-              if (teamObj && onSelectTeam) onSelectTeam(teamObj.id);
-            }}
-          />
+          {/* Desktop-only layout: columns side-by-side */}
+          <div className="hidden md:flex flex-row items-center justify-between gap-6 w-full">
+            <TeamColumn 
+              country={match.team_a} 
+              favoriteTeam={favoriteTeam} 
+              onClick={() => {
+                const teamObj = teams.find(t => t.name === match.team_a);
+                if (teamObj && onSelectTeam) onSelectTeam(teamObj.id);
+              }}
+            />
+
+            <div className="flex flex-col items-center gap-4 min-w-[210px]">
+              <div className="flex items-center gap-4">
+                {isFinished ? (
+                  <>
+                    <ScoreChip value={match.score_a ?? 0} win={(match.score_a ?? 0) > (match.score_b ?? 0)} />
+                    <span className="text-faint font-display font-bold text-2xl">:</span>
+                    <ScoreChip value={match.score_b ?? 0} win={(match.score_b ?? 0) > (match.score_a ?? 0)} />
+                  </>
+                ) : isTBD ? (
+                  <div className="flex flex-col items-center gap-2 py-3">
+                    <span className="w-14 h-14 rounded-full bg-amber-50 border border-dashed border-amber-300 flex items-center justify-center text-amber-500 animate-pulse">
+                      <Icon name="lock" size={20} />
+                    </span>
+                    <span className="text-[10px] font-bold text-amber-600 uppercase tracking-[0.16em]">Lezárva</span>
+                  </div>
+                ) : (
+                  <>
+                    <ScoreStepper value={a} onAdd={() => adjust('a', 1)} onSub={() => adjust('a', -1)} />
+                    <span className="text-faint font-display font-bold text-2xl mt-[-6px]">:</span>
+                    <ScoreStepper value={b} onAdd={() => adjust('b', 1)} onSub={() => adjust('b', -1)} />
+                  </>
+                )}
+              </div>
+            </div>
+
+            <TeamColumn 
+              country={match.team_b} 
+              favoriteTeam={favoriteTeam} 
+              onClick={() => {
+                const teamObj = teams.find(t => t.name === match.team_b);
+                if (teamObj && onSelectTeam) onSelectTeam(teamObj.id);
+              }}
+            />
+          </div>
+
         </div>
+
+        {/* Saved Tip Area (Common) */}
+        {!isTBD && (
+          <div className="text-center min-h-[40px] flex flex-col items-center justify-center gap-2 mt-4 md:mt-3">
+            {isFinished ? (
+              <SavedTipChip label="Tipped" value={`${a} - ${b} ${prediction?.is_tuti ? '⭐️' : ''}`} tone="neutral" />
+            ) : prediction ? (
+              <SavedTipChip label="Mentett tipped" value={`${prediction.predicted_a} - ${prediction.predicted_b} ${prediction.is_tuti ? '⭐️' : ''}`} tone="accent" />
+            ) : (
+              <span className="text-[12px] font-semibold text-rose-600 bg-rose-50 border border-rose-200 px-3 py-1.5 rounded-full animate-pulse">
+                Még nem tippeltél — állítsd be a gólokat.
+              </span>
+            )}
+          </div>
+        )}
+      </div>
 
         {/* TUTI TIPP Toggle */}
         {!isFinished && !isTBD && (
