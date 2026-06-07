@@ -266,7 +266,7 @@ function OddsBlock({ match, stats }: { match: Match; stats: MatchStats }) {
   );
 }
 
-function H2HBlock({ stats }: { stats: MatchStats }) {
+function H2HBlock({ match, stats }: { match: Match; stats: MatchStats }) {
   const formatH2HDate = (dateStr: string): string => {
     if (!dateStr) return '';
     const parts = dateStr.split('.');
@@ -280,10 +280,67 @@ function H2HBlock({ stats }: { stats: MatchStats }) {
     return dateStr;
   };
 
+  const teamA = match.team_a;
+  const teamB = match.team_b;
+  const history = stats.h2hHistory || [];
+
+  let winsA = 0;
+  let winsB = 0;
+  let draws = 0;
+
+  history.forEach((h: any) => {
+    let winner = h.winner;
+    if (!winner && h.score) {
+      const scoreParts = h.score.split('-').map((s: string) => parseInt(s.trim(), 10));
+      if (scoreParts.length === 2) {
+        if (scoreParts[0] > scoreParts[1]) winner = h.home;
+        else if (scoreParts[0] < scoreParts[1]) winner = h.away;
+        else winner = 'draw';
+      }
+    }
+
+    if (winner === 'draw') {
+      draws++;
+    } else if (winner) {
+      const winnerNorm = winner.toUpperCase();
+      const codeA = getAbbreviationCode(teamA).toUpperCase();
+      const codeB = getAbbreviationCode(teamB).toUpperCase();
+
+      if (winner === teamA || winnerNorm === codeA) {
+        winsA++;
+      } else if (winner === teamB || winnerNorm === codeB) {
+        winsB++;
+      } else {
+        const homeNorm = h.home ? h.home.toUpperCase() : '';
+        const awayNorm = h.away ? h.away.toUpperCase() : '';
+        const teamANorm = teamA.toUpperCase();
+        const teamBNorm = teamB.toUpperCase();
+
+        if (winner === h.home && (homeNorm === teamANorm || homeNorm === codeA)) {
+          winsA++;
+        } else if (winner === h.home && (homeNorm === teamBNorm || homeNorm === codeB)) {
+          winsB++;
+        } else if (winner === h.away && (awayNorm === teamANorm || awayNorm === codeA)) {
+          winsA++;
+        } else if (winner === h.away && (awayNorm === teamBNorm || awayNorm === codeB)) {
+          winsB++;
+        }
+      }
+    }
+  });
+
+  const totalMatches = history.length;
+  let summaryText = '';
+  if (totalMatches === 0) {
+    summaryText = 'A két csapat még nem játszott egymás ellen korábban.';
+  } else {
+    summaryText = `Az utolsó ${totalMatches} egymás elleni mérkőzés mérlege: ${teamA} ${winsA} győzelem, ${teamB} ${winsB} győzelem, valamint ${draws} döntetlen.`;
+  }
+
   return (
     <div>
       <p className="text-[12.5px] text-ink/85 leading-relaxed mb-4 rounded-xl border border-line bg-card p-3.5">
-        {stats.h2hSummary || 'Nincs szöveges H2H összefoglaló.'}
+        {summaryText}
       </p>
       {stats.h2hHistory && stats.h2hHistory.length > 0 && (
         <div className="space-y-2">
@@ -939,7 +996,7 @@ export function MatchDetail({ match, prediction, onSave, favoriteTeam, teams = [
             <OddsBlock match={match} stats={dbStats} />
           </Section>
           <Section icon="swords" iconColor="text-rose-500" title="Egymás elleni mérleg (H2H)">
-            <H2HBlock stats={dbStats} />
+            <H2HBlock match={match} stats={dbStats} />
           </Section>
           <Section 
             icon="activity" 
