@@ -35,6 +35,7 @@ export const teams = pgTable('teams', {
   // AI-generated, refreshable per team
   injuries: jsonb('injuries'),              // ["Player Name (injury detail)", ...]
   news: jsonb('news'),                      // [{text, source, url}, ...]
+  squad: jsonb('squad'),                     // { manager: string, goalkeepers: string[], defenders: string[], midfielders: string[], forwards: string[] }
 
   updated_at: timestamp('updated_at').defaultNow().notNull(),
 });

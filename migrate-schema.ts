@@ -22,10 +22,19 @@ async function main() {
       temperature INTEGER,
       injuries JSONB,
       news JSONB,
+      squad JSONB,
       updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     )
   `;
   console.log('✅ teams table created');
+
+  console.log('Altering teams table to add squad column...');
+  try {
+    await sql`ALTER TABLE teams ADD COLUMN IF NOT EXISTS squad JSONB`;
+    console.log('  ✅ squad column added or already exists');
+  } catch (e: any) {
+    console.log('  ⏭️ squad column addition error:', e.message);
+  }
 
   console.log('Adding columns to matches...');
   const columns = [

@@ -95,6 +95,117 @@ function normalizeName(name: string): string {
 async function main() {
   console.log('Starting data import script...');
 
+  // Parse official squads from jatekosok.md
+  console.log('Parsing jatekosok.md...');
+  const squadsPath = path.join(process.cwd(), '../assets/jatekosok.md');
+  const squadsContent = fs.readFileSync(squadsPath, 'utf8');
+  const squadLines = squadsContent.split('\n');
+
+  const squadsMap: Record<string, {
+    manager: string | null;
+    goalkeepers: string[];
+    defenders: string[];
+    midfielders: string[];
+    forwards: string[];
+  }> = {};
+
+  const NORMALIZE_UPPERCASE_TEAM_NAME: Record<string, string> = {
+    'MEXIKÓ': 'Mexikó',
+    'DÉL-AFRIKA': 'Dél-afrikai Köztársaság',
+    'DÉL-KOREA': 'Koreai Köztársaság',
+    'CSEHORSZÁG': 'Csehország',
+    'KANADA': 'Kanada',
+    'BOSZNIA-HERCEGOVINA': 'Bosznia-Hercegovina',
+    'KATAR': 'Katar',
+    'SVÁJC': 'Svájc',
+    'BRAZÍLIA': 'Brazília',
+    'MAROKKÓ': 'Marokkó',
+    'HAITI': 'Haiti',
+    'SKÓCIA': 'Skócia',
+    'EGYESÜLT ÁLLAMOK': 'Egyesült Államok',
+    'PARAGUAY': 'Paraguay',
+    'AUSZTRÁLIA': 'Ausztrália',
+    'TÖRÖKORSZÁG': 'Törökország',
+    'NÉMETORSZÁG': 'Németország',
+    'CURAÇAO': 'Curaçao',
+    'ELEFÁNTCSONTPART': 'Elefántcsontpart',
+    'ECUADOR': 'Ecuador',
+    'HOLLANDIA': 'Hollandia',
+    'JAPÁN': 'Japán',
+    'SVÉDORSZÁG': 'Svédország',
+    'TUNÉZIA': 'Tunézia',
+    'BELGIUM': 'Belgium',
+    'EGYIPTOM': 'Egyiptom',
+    'IRÁN': 'Irán',
+    'ÚJ-ZÉLAND': 'Új-Zéland',
+    'SPANYOLORSZÁG': 'Spanyolország',
+    'ZÖLD-FOKI-SZIGETEK': 'Zöld-foki Köztársaság',
+    'SZAÚD-ARÁBIA': 'Szaúd-Arábia',
+    'URUGUAY': 'Uruguay',
+    'FRANCIAORSZÁG': 'Franciaország',
+    'SZENEGÁL': 'Szenegál',
+    'IRAK': 'Irak',
+    'NORVÉGIA': 'Norvégia',
+    'ARGENTÍNA': 'Argentína',
+    'ALGÉRIA': 'Algéria',
+    'AUSZTRIA': 'Ausztria',
+    'JORDÁNIA': 'Jordánia',
+    'PORTUGÁLIA': 'Portugália',
+    'KONGÓI DK': 'Kongói DK',
+    'ÜZBEGISZTÁN': 'Üzbegisztán',
+    'KOLUMBIA': 'Kolumbia',
+    'OLASZORSZÁG': 'Olaszország',
+    'HORVÁTORSZÁG': 'Horvátország',
+    'ANGLIA': 'Anglia',
+    'GHÁNA': 'Ghána',
+    'PANAMA': 'Panama'
+  };
+
+  let currentTeam: string | null = null;
+  let currentPos: 'goalkeepers' | 'defenders' | 'midfielders' | 'forwards' | null = null;
+
+  for (const line of squadLines) {
+    const trimmed = line.trim();
+    if (trimmed.startsWith('###')) {
+      let rawName = trimmed.replace('###', '').trim();
+      rawName = rawName.split('(')[0].trim().toUpperCase();
+      const dbName = NORMALIZE_UPPERCASE_TEAM_NAME[rawName];
+      if (dbName) {
+        currentTeam = dbName;
+        squadsMap[currentTeam] = {
+          manager: null,
+          goalkeepers: [],
+          defenders: [],
+          midfielders: [],
+          forwards: []
+        };
+        currentPos = null;
+      } else {
+        currentTeam = null;
+        currentPos = null;
+      }
+    } else if (currentTeam) {
+      const sq = squadsMap[currentTeam];
+      if (trimmed.startsWith('- **Szövetségi kapitány:**')) {
+        sq.manager = trimmed.replace('- **Szövetségi kapitány:**', '').trim();
+      } else if (trimmed.startsWith('- **Kapusok:**')) {
+        currentPos = 'goalkeepers';
+      } else if (trimmed.startsWith('- **Védők:**')) {
+        currentPos = 'defenders';
+      } else if (trimmed.startsWith('- **Középpályások:**')) {
+        currentPos = 'midfielders';
+      } else if (trimmed.startsWith('- **Támadók:**')) {
+        currentPos = 'forwards';
+      } else if (trimmed.startsWith('-') && currentPos) {
+        const pName = trimmed.replace(/^[-\s*]+/, '').trim();
+        if (pName) {
+          sq[currentPos].push(pName);
+        }
+      }
+    }
+  }
+  console.log(`Parsed ${Object.keys(squadsMap).length} team squads.`);
+
   // 1. Load matches from database to dynamically map groups
   console.log('Fetching matches from DB...');
   const dbMatches = await db.select().from(schema.matches);
@@ -294,6 +405,7 @@ async function main() {
       defense_rating,
       injuries,
       news,
+      squad: squadsMap[teamConf.name] || null,
       updated_at: new Date()
     };
 
@@ -313,6 +425,7 @@ async function main() {
           defense_rating: teamRecord.defense_rating,
           injuries: teamRecord.injuries,
           news: teamRecord.news,
+          squad: teamRecord.squad,
           updated_at: teamRecord.updated_at
         }
       });

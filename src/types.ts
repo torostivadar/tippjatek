@@ -15,6 +15,14 @@ export interface Match {
   venue_capacity?: number | null;
 }
 
+export interface Squad {
+  manager?: string | null;
+  goalkeepers?: string[] | null;
+  defenders?: string[] | null;
+  midfielders?: string[] | null;
+  forwards?: string[] | null;
+}
+
 export interface Team {
   id: string;
   name: string;
@@ -28,6 +36,7 @@ export interface Team {
   temperature?: number | null;
   injuries?: string[] | null;
   news?: { text: string; source?: string; url?: string }[] | null;
+  squad?: Squad | null;
   updated_at?: string;
 }
 
