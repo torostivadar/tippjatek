@@ -391,6 +391,13 @@ async function main() {
       }
     }
 
+    // Host nations (USA, Canada, Mexico) must have at least 90% temperature
+    if (['Egyesült Államok', 'Kanada', 'Mexikó'].includes(teamConf.name)) {
+      if (temperature < 90) {
+        temperature = 90;
+      }
+    }
+
     // Insert or update team
     const teamRecord = {
       id: teamConf.id,
