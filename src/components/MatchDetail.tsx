@@ -55,6 +55,8 @@ const BADGE_TONE = {
   fav: { bg: 'transparent', fg: '#EA580C', bd: 'transparent' },
 };
 
+const FAV_COLOR = '#F97316';
+
 function computeResult(match: Match, prediction: Prediction | undefined, favoriteTeam?: string | null) {
   if (!prediction) {
     return { has: false, exact: false, outcome: false, banker: false, favourite: false, total: 0, badges: [], title: 'Nem tippeltél erre a meccsre.', tone: 'none' as const };
