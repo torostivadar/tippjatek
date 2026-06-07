@@ -111,32 +111,22 @@ export function Groups({ teams, matches, onSelectTeam }: GroupsProps) {
     });
   }
 
-  // Helpers for temperature styling
-  const getTempColor = (temp: number | null | undefined) => {
-    if (temp === undefined || temp === null) return 'bg-slate-300 text-slate-600';
-    if (temp >= 75) return 'bg-rose-50 border-rose-200 text-rose-600';
-    if (temp >= 55) return 'bg-orange-50 border-orange-200 text-orange-600';
-    if (temp >= 35) return 'bg-amber-50 border-amber-200 text-amber-600';
-    return 'bg-blue-50 border-blue-200 text-blue-600';
-  };
-
-  // Group header colors for premium visual distinction
   const getGroupHeaderStyle = (letter: string) => {
     const styles: Record<string, string> = {
-      A: 'from-blue-600 to-indigo-600 shadow-blue-100',
-      B: 'from-purple-600 to-indigo-600 shadow-indigo-100',
-      C: 'from-pink-600 to-rose-600 shadow-rose-100',
-      D: 'from-orange-600 to-amber-600 shadow-orange-100',
-      E: 'from-emerald-600 to-teal-600 shadow-emerald-100',
-      F: 'from-blue-500 to-cyan-500 shadow-cyan-100',
-      G: 'from-violet-600 to-purple-600 shadow-purple-100',
-      H: 'from-rose-500 to-orange-500 shadow-orange-100',
-      I: 'from-cyan-600 to-teal-600 shadow-teal-100',
-      J: 'from-indigo-600 to-violet-600 shadow-indigo-100',
-      K: 'from-teal-600 to-emerald-600 shadow-emerald-100',
-      L: 'from-amber-500 to-yellow-500 shadow-yellow-100'
+      A: 'bg-blue-600 text-white',
+      B: 'bg-indigo-600 text-white',
+      C: 'bg-rose-600 text-white',
+      D: 'bg-orange-600 text-white',
+      E: 'bg-emerald-600 text-white',
+      F: 'bg-cyan-600 text-white',
+      G: 'bg-purple-600 text-white',
+      H: 'bg-amber-600 text-white',
+      I: 'bg-teal-600 text-white',
+      J: 'bg-sky-600 text-white',
+      K: 'bg-fuchsia-600 text-white',
+      L: 'bg-violet-600 text-white'
     };
-    return styles[letter] || 'from-slate-600 to-slate-800';
+    return styles[letter] || 'bg-slate-700 text-white';
   };
 
   return (
@@ -150,18 +140,21 @@ export function Groups({ teams, matches, onSelectTeam }: GroupsProps) {
             return (
               <div 
                 key={letter}
-                className="bg-card rounded-3xl border border-line shadow-[0_12px_30px_-15px_rgba(16,24,40,0.08)] overflow-hidden transition-all duration-300 hover:shadow-[0_20px_40px_-18px_rgba(16,24,40,0.12)]"
+                className="bg-card rounded-2xl border border-line shadow-[0_2px_8px_-2px_rgba(16,24,40,0.04)] overflow-hidden transition-all duration-300 hover:shadow-[0_12px_24px_-10px_rgba(16,24,40,0.08)] hover:border-line2"
               >
                 {/* Group Header */}
-                <div className={`bg-gradient-to-r ${getGroupHeaderStyle(letter)} px-5 py-4 text-white flex items-center justify-between shadow-sm`}>
-                  <h3 className="font-display font-bold text-base tracking-wide">{letter} CSOPORT</h3>
-                  <span className="text-[10px] font-bold uppercase tracking-[0.15em] bg-white/20 px-2 py-0.5 rounded-full backdrop-blur-xs">
+                <div className={`px-5 py-3.5 flex items-center justify-between ${getGroupHeaderStyle(letter)}`}>
+                  <h3 className="font-display font-bold text-[13px] uppercase tracking-wider flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-white/90" />
+                    {letter} csoport
+                  </h3>
+                  <span className="text-[9px] font-bold uppercase tracking-[0.12em] bg-white/20 text-white border border-white/30 px-2.5 py-0.5 rounded-full shadow-xs">
                     Állás
                   </span>
                 </div>
 
                 {/* Table Header */}
-                <div className="grid grid-cols-12 px-5 py-2.5 text-[10px] font-bold uppercase tracking-[0.12em] text-faint border-b border-line bg-wash">
+                <div className="grid grid-cols-12 px-5 py-2.5 text-[10px] font-bold uppercase tracking-[0.12em] text-faint border-b border-line bg-wash/50">
                   <div className="col-span-7">Csapat</div>
                   <div className="col-span-1.5 text-center">M</div>
                   <div className="col-span-1.5 text-center">Gk</div>
@@ -177,7 +170,7 @@ export function Groups({ teams, matches, onSelectTeam }: GroupsProps) {
                       <button
                         key={team.id}
                         onClick={() => onSelectTeam(team.id)}
-                        className="w-full grid grid-cols-12 px-5 py-3.5 items-center text-left hover:bg-wash transition-colors group"
+                        className="w-full grid grid-cols-12 px-5 py-3 items-center text-left hover:bg-wash transition-colors group"
                       >
                         {/* Team Name and flag */}
                         <div className="col-span-7 flex items-center gap-2.5 min-w-0">
@@ -188,13 +181,6 @@ export function Groups({ teams, matches, onSelectTeam }: GroupsProps) {
                           <div className="min-w-0">
                             <div className="text-[13px] font-bold text-ink truncate group-hover:text-accent transition-colors">
                               {team.name}
-                            </div>
-                            <div className="text-[9.5px] font-bold text-faint flex items-center gap-1.5">
-                              <span>FIFA #{team.fifa_ranking || '-'}</span>
-                              <span className="w-1 h-1 rounded-full bg-slate-300" />
-                              <span className={`px-1.5 py-0.1 rounded-[4px] border text-[9px] font-bold ${getTempColor(team.temperature)}`}>
-                                {team.temperature || 50}°C
-                              </span>
                             </div>
                           </div>
                         </div>
