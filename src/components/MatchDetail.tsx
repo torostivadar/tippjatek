@@ -827,7 +827,6 @@ export function MatchDetail({ match, prediction, onSave, favoriteTeam, teams = [
             )}
           </div>
         )}
-      </div>
 
         {/* TUTI TIPP Toggle */}
         {!isFinished && !isTBD && (
