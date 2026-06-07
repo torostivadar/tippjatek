@@ -327,18 +327,18 @@ function H2HBlock({ stats }: { stats: MatchStats }) {
             return (
               <div key={i} className="grid grid-cols-12 items-center rounded-xl border border-line bg-card px-3 py-2.5 gap-1.5 md:gap-2">
                 {/* Date column */}
-                <div className="col-span-3 font-mono text-[11px] text-faint text-left">
+                <div className="col-span-4 sm:col-span-3 font-mono text-[11px] text-faint text-left">
                   {formattedDate}
                 </div>
                 
                 {/* Team A abbreviation */}
-                <div className="col-span-2 text-right font-display text-[13px] font-bold text-ink">
+                <div className="col-span-2 sm:col-span-2 text-right font-display text-[13px] font-bold text-ink truncate">
                   {teamAAbbr}
                 </div>
                 
                 {/* Score badge (centered and highlighted) */}
-                <div className="col-span-2 flex justify-center">
-                  <span className={`font-mono text-[11.5px] font-bold px-2 py-0.5 rounded-md border tabular-nums select-none shadow-sm ${
+                <div className="col-span-4 sm:col-span-2 flex justify-center">
+                  <span className={`font-mono text-[11.5px] font-bold px-2 py-0.5 rounded-md border tabular-nums select-none shadow-sm whitespace-nowrap ${
                     displayWinner === 'draw' 
                       ? 'bg-slate-50 text-slate-600 border-slate-200' 
                       : 'bg-indigo-50/80 text-indigo-700 border-indigo-200/60'
@@ -348,12 +348,12 @@ function H2HBlock({ stats }: { stats: MatchStats }) {
                 </div>
                 
                 {/* Team B abbreviation */}
-                <div className="col-span-2 text-left font-display text-[13px] font-bold text-ink">
+                <div className="col-span-2 sm:col-span-2 text-left font-display text-[13px] font-bold text-ink truncate">
                   {teamBAbbr}
                 </div>
                 
                 {/* Winner indicator badge */}
-                <div className="col-span-3 flex justify-end">
+                <div className="hidden sm:flex sm:col-span-3 justify-end">
                   <span className={`text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md border whitespace-nowrap truncate ${
                     displayWinner === 'draw' ? 'bg-wash text-mid border-line' : 'bg-accent/10 text-accent border-accent/25'}`}>
                     {displayWinner === 'draw' ? 'Döntetlen' : `${getAbbreviationCode(displayWinner)} győz`}
@@ -711,25 +711,25 @@ export function MatchDetail({ match, prediction, onSave, favoriteTeam, teams = [
           
           {/* Mobile-only layout: Teams side-by-side, inputs below */}
           <div className="flex flex-col items-center gap-4 w-full md:hidden">
-            {/* Top row: Teams side-by-side */}
-            <div className="flex items-center justify-between w-full max-w-[280px]">
+            {/* Top row: Teams side-by-side, perfectly symmetric */}
+            <div className="grid grid-cols-[1fr_30px_1fr] items-center w-full max-w-[320px]">
               {/* Team A */}
               <div 
                 onClick={() => {
                   const teamObj = teams.find(t => t.name === match.team_a);
                   if (teamObj && onSelectTeam) onSelectTeam(teamObj.id);
                 }}
-                className="flex flex-col items-center gap-1.5 cursor-pointer group"
+                className="flex flex-col items-center gap-1.5 cursor-pointer group min-w-0 w-full justify-self-center"
               >
                 <FlagBadge country={match.team_a} size={42} />
-                <span className="font-display text-[12px] font-bold text-ink leading-tight text-center px-1 flex items-center gap-0.5">
-                  {match.team_a}
+                <div className="font-display text-[12px] font-bold text-ink leading-tight text-center px-1 min-w-0 w-full flex items-center justify-center gap-0.5">
+                  <span className="line-clamp-2 break-words">{match.team_a}</span>
                   {!!(favoriteTeam && match.team_a === favoriteTeam) && <Icon name="star" size={9} fill={FAV_COLOR} strokeWidth={0} className="shrink-0" />}
-                </span>
+                </div>
               </div>
 
               {/* VS */}
-              <span className="font-mono text-[10px] font-bold text-faint uppercase tracking-wider">vs</span>
+              <span className="font-mono text-[10px] font-bold text-faint uppercase tracking-wider text-center">vs</span>
 
               {/* Team B */}
               <div 
@@ -737,13 +737,13 @@ export function MatchDetail({ match, prediction, onSave, favoriteTeam, teams = [
                   const teamObj = teams.find(t => t.name === match.team_b);
                   if (teamObj && onSelectTeam) onSelectTeam(teamObj.id);
                 }}
-                className="flex flex-col items-center gap-1.5 cursor-pointer group"
+                className="flex flex-col items-center gap-1.5 cursor-pointer group min-w-0 w-full justify-self-center"
               >
                 <FlagBadge country={match.team_b} size={42} />
-                <span className="font-display text-[12px] font-bold text-ink leading-tight text-center px-1 flex items-center gap-0.5">
-                  {match.team_b}
+                <div className="font-display text-[12px] font-bold text-ink leading-tight text-center px-1 min-w-0 w-full flex items-center justify-center gap-0.5">
+                  <span className="line-clamp-2 break-words">{match.team_b}</span>
                   {!!(favoriteTeam && match.team_b === favoriteTeam) && <Icon name="star" size={9} fill={FAV_COLOR} strokeWidth={0} className="shrink-0" />}
-                </span>
+                </div>
               </div>
             </div>
 
