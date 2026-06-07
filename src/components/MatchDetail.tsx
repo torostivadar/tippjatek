@@ -265,6 +265,19 @@ function OddsBlock({ match, stats }: { match: Match; stats: MatchStats }) {
 }
 
 function H2HBlock({ stats }: { stats: MatchStats }) {
+  const formatH2HDate = (dateStr: string): string => {
+    if (!dateStr) return '';
+    const parts = dateStr.split('.');
+    if (parts.length === 3) {
+      const [d, m, y] = parts.map(p => p.trim());
+      return `${y}/${m}/${d}`;
+    }
+    if (dateStr.length === 4 && !isNaN(Number(dateStr))) {
+      return dateStr.slice(-2);
+    }
+    return dateStr;
+  };
+
   return (
     <div>
       <p className="text-[12.5px] text-ink/85 leading-relaxed mb-4 rounded-xl border border-line bg-card p-3.5">
@@ -274,7 +287,7 @@ function H2HBlock({ stats }: { stats: MatchStats }) {
         <div className="space-y-2">
           {stats.h2hHistory.map((h: any, i) => {
             const displayDate = h.year || h.date || '';
-            const displayRes = h.res || `${h.home} ${h.score} ${h.away}`;
+            const formattedDate = formatH2HDate(displayDate);
             
             let displayWinner = h.winner || 'draw';
             if (!h.winner && h.score) {
@@ -286,14 +299,64 @@ function H2HBlock({ stats }: { stats: MatchStats }) {
               }
             }
 
+            let teamAAbbr = '';
+            let teamBAbbr = '';
+            let scoreStr = '';
+
+            if (h.res) {
+              const matchRes = h.res.match(/^([A-Za-z]{3})\s*(\d+\s*-\s*\d+)\s*([A-Za-z]{3})$/i);
+              if (matchRes) {
+                teamAAbbr = matchRes[1].toUpperCase();
+                scoreStr = matchRes[2];
+                teamBAbbr = matchRes[3].toUpperCase();
+              } else {
+                teamAAbbr = h.home ? getAbbreviationCode(h.home) : '';
+                teamBAbbr = h.away ? getAbbreviationCode(h.away) : '';
+                scoreStr = h.score || '';
+              }
+            } else {
+              teamAAbbr = h.home ? getAbbreviationCode(h.home) : '';
+              teamBAbbr = h.away ? getAbbreviationCode(h.away) : '';
+              scoreStr = h.score || '';
+            }
+
+            const formattedScore = scoreStr.replace(/\s*-\s*/, ' - ');
+
             return (
-              <div key={i} className="flex items-center justify-between rounded-xl border border-line bg-card px-3.5 py-2.5">
-                <span className="font-mono text-[11px] text-faint">{displayDate}</span>
-                <span className="font-display text-[13px] font-bold text-ink tracking-wide">{displayRes}</span>
-                <span className={`text-[9px] font-bold uppercase tracking-wider px-2 py-1 rounded-md border whitespace-nowrap ${
-                  displayWinner === 'draw' ? 'bg-wash text-mid border-line' : 'bg-accent/10 text-accent border-accent/25'}`}>
-                  {displayWinner === 'draw' ? 'Döntetlen' : `${displayWinner} győz`}
-                </span>
+              <div key={i} className="grid grid-cols-12 items-center rounded-xl border border-line bg-card px-3 py-2.5 gap-1.5 md:gap-2">
+                {/* Date column */}
+                <div className="col-span-3 font-mono text-[11px] text-faint text-left">
+                  {formattedDate}
+                </div>
+                
+                {/* Team A abbreviation */}
+                <div className="col-span-2 text-right font-display text-[13px] font-bold text-ink">
+                  {teamAAbbr}
+                </div>
+                
+                {/* Score badge (centered and highlighted) */}
+                <div className="col-span-2 flex justify-center">
+                  <span className={`font-mono text-[11.5px] font-bold px-2 py-0.5 rounded-md border tabular-nums select-none shadow-sm ${
+                    displayWinner === 'draw' 
+                      ? 'bg-slate-50 text-slate-600 border-slate-200' 
+                      : 'bg-indigo-50/80 text-indigo-700 border-indigo-200/60'
+                  }`}>
+                    {formattedScore}
+                  </span>
+                </div>
+                
+                {/* Team B abbreviation */}
+                <div className="col-span-2 text-left font-display text-[13px] font-bold text-ink">
+                  {teamBAbbr}
+                </div>
+                
+                {/* Winner indicator badge */}
+                <div className="col-span-3 flex justify-end">
+                  <span className={`text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md border whitespace-nowrap truncate ${
+                    displayWinner === 'draw' ? 'bg-wash text-mid border-line' : 'bg-accent/10 text-accent border-accent/25'}`}>
+                    {displayWinner === 'draw' ? 'Döntetlen' : `${getAbbreviationCode(displayWinner)} győz`}
+                  </span>
+                </div>
               </div>
             );
           })}
@@ -304,18 +367,20 @@ function H2HBlock({ stats }: { stats: MatchStats }) {
 }
 
 function FormBlock({ match, stats }: { match: Match; stats: MatchStats }) {
-  const bg = (o: string) => o === 'W' ? '#15A34A' : o === 'D' ? '#C8D2DF' : '#E5564B';
-  const fg = (o: string) => o === 'D' ? '#334155' : '#FFFFFF';
-  
+  const getFormStyle = (o: string) => {
+    if (o === 'W') return 'bg-emerald-50 border-emerald-200 text-emerald-600';
+    if (o === 'D') return 'bg-slate-50 border-slate-200 text-slate-500';
+    return 'bg-rose-50 border-rose-200 text-rose-600';
+  };
+
   const Card = ({ country, data }: { country: string; data: any }) => (
-    <div className="rounded-2xl border border-line bg-card p-4 flex items-center justify-between gap-3">
+    <div className="rounded-2xl border border-line bg-card p-4 flex items-center justify-between gap-3 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
       <span className="text-[12.5px] font-bold text-ink font-display truncate">{country}</span>
       <div className="flex gap-1.5">
         {data.form.map((o: string, i: number) => (
           <span 
             key={i} 
-            className="w-7 h-7 rounded-lg flex items-center justify-center text-[11px] font-bold font-display"
-            style={{ background: bg(o), color: fg(o) }}
+            className={`w-7 h-7 rounded-lg flex items-center justify-center text-[11px] font-extrabold font-mono border shadow-sm ${getFormStyle(o)}`}
           >
             {o}
           </span>
@@ -482,6 +547,22 @@ function Placeholder({ text }: { text: string }) {
   );
 }
 
+function renderTvChannel(channel: string) {
+  if (!channel) return null;
+  const match = channel.match(/^(.*?)\s*(\([^)]+\))$/);
+  if (match) {
+    const mainChannel = match[1];
+    const country = match[2];
+    return (
+      <span>
+        <strong className="text-ink">{mainChannel}</strong>
+        <span className="font-normal text-mid ml-1">{country}</span>
+      </span>
+    );
+  }
+  return <strong className="text-ink">{channel}</strong>;
+}
+
 interface MatchDetailProps {
   match: Match;
   prediction?: Prediction;
@@ -610,12 +691,12 @@ export function MatchDetail({ match, prediction, onSave, favoriteTeam, teams = [
           {match.tv_channel && (
             <span className="flex items-center gap-1.5">
               <Icon name="target" size={13} className="text-indigo-500" />
-              <span>Közvetítés: <strong className="text-ink">{match.tv_channel}</strong></span>
+              <span>Közvetítés: {renderTvChannel(match.tv_channel)}</span>
             </span>
           )}
           {match.venue_name && (
             <span className="flex items-center gap-1.5">
-              <Icon name="star" size={13} className="text-rose-500" />
+              <Icon name="pin" size={13} className="text-rose-500" />
               <span>Helyszín: <strong className="text-ink">{match.venue_name}</strong>{match.venue_city ? `, ${match.venue_city}` : ''}{match.venue_capacity ? ` (${match.venue_capacity.toLocaleString()} fő)` : ''}</span>
             </span>
           )}
