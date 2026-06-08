@@ -18,7 +18,7 @@ export function Auth() {
       if (mode === 'signup') {
         const { error } = await supabase.auth.signUp({ email, password });
         if (error) throw error;
-        alert('Sikeres regisztráció! Kérlek erősítsd meg az e-mail címed (ellenőrizd a spam mappát is!).');
+        alert('Sikeres regisztráció!');
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;

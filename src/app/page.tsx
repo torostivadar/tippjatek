@@ -112,7 +112,7 @@ export default function Home() {
           </div>
           
           <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 text-amber-800 text-[12.5px] leading-relaxed mb-6">
-            <span className="font-bold">The Fan Factor:</span> Amikor a kedvenc csapatod játszik, arra a meccsre automatikusan **dupla pontot** kapsz (helyes kimenetelért 30 helyett 60, telitalálatért 50 helyett 100 pont)! Ezt a választást a későbbiekben már nem tudod módosítani.
+            <span className="font-bold">The Fan Factor:</span> Amikor a kedvenc csapatod játszik, arra a meccsre automatikusan **dupla pontot** kapsz (helyes kimenetelért 30 helyett 60, telitalálatért 50 helyett 100 pont)! Ezt a választást a világbajnokság első mérkőzésének kezdetéig (2026. június 11. 21:00) szabadon módosíthatod a profilodban, utána viszont véglegessé válik.
           </div>
 
           <div className="max-h-60 overflow-y-auto border border-line rounded-2xl p-2 divide-y divide-line nice-scroll bg-wash">
@@ -120,7 +120,7 @@ export default function Home() {
               <button
                 key={team}
                 onClick={() => {
-                  if (confirm(`Biztosan a(z) ${team} csapatot választod kedvencednek? Ezt később nem módosíthatod!`)) {
+                  if (confirm(`Biztosan a(z) ${team} csapatot választod kedvencednek? Ezt a döntést a vb első meccsének kezdetéig (június 11. 21:00) még megváltoztathatod a profilodban!`)) {
                     selectFavoriteTeam(team);
                   }
                 }}
