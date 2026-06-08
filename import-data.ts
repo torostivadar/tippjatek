@@ -67,7 +67,8 @@ const TEAMS_LIST = [
   { id: 'RSA', name: 'Dél-afrikai Köztársaság', name_en: 'South Africa' },
   { id: 'GHA', name: 'Ghána', name_en: 'Ghana' },
   { id: 'QAT', name: 'Katar', name_en: 'Qatar' },
-  { id: 'IRQ', name: 'Irak', name_en: 'Iraq' }
+  { id: 'IRQ', name: 'Irak', name_en: 'Iraq' },
+  { id: 'NZL', name: 'Új-Zéland', name_en: 'New Zealand' }
 ];
 
 // Let's filter TEAMS_LIST to match exactly the 48 teams in crests-map.json
