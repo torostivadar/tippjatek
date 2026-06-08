@@ -177,7 +177,7 @@ export default function Home() {
                activeTab === 'groups' ? 'Csoportok & Ágrajz' : 'Játékszabály'}
             </h1>
             <p className="text-mid text-[13px] mt-2 max-w-xl leading-relaxed">
-              {activeTab === 'matches' && 'Válassz meccset a listából, add le a tipped, és mélyülj el az AI-elemzésben, oddsokban és formamutatókban.'}
+              {activeTab === 'matches' && 'Válassz meccset a listából, add le a tipped, és mélyülj el az elemzésekben, oddsokban és formamutatókban.'}
               {activeTab === 'leaderboard' && 'A barátok pontszámai, telitalálatai és az aktuális helyezésed egy helyen.'}
               {activeTab === 'groups' && 'A torna csoportbeosztása és a kieséses szakasz ágrajza.'}
               {activeTab === 'rules' && 'Ismerd meg a pontozási rendszert, a TUTI tippeket, a Fan Factor bónuszt és a kiesési szabályokat.'}
@@ -185,14 +185,20 @@ export default function Home() {
           </div>
           {activeTab === 'matches' && (
             <div className="grid grid-cols-3 gap-2 w-full md:w-auto md:flex md:items-center md:gap-2.5">
-              <div className="flex items-center gap-1.5 md:gap-2.5 rounded-xl border border-line bg-card px-2 md:px-3.5 py-1.5 md:py-2 shadow-[0_1px_2px_rgba(16,24,40,0.04)] min-w-0">
+              <div 
+                onClick={() => setActiveTab('leaderboard')}
+                className="flex items-center gap-1.5 md:gap-2.5 rounded-xl border border-line bg-card px-2 md:px-3.5 py-1.5 md:py-2 shadow-[0_1px_2px_rgba(16,24,40,0.04)] min-w-0 cursor-pointer hover:bg-wash active:scale-95 transition-all select-none"
+              >
                 <Icon name="zap" size={13} className="text-accent shrink-0 md:scale-110" />
                 <div className="leading-tight min-w-0">
                   <div className="font-mono text-[13px] md:text-[15px] font-bold text-ink tabular-nums truncate">{myPoints}</div>
                   <div className="text-[8.5px] md:text-[9.5px] font-bold uppercase tracking-[0.05em] md:tracking-[0.12em] text-faint truncate">Pontom</div>
                 </div>
               </div>
-              <div className="flex items-center gap-1.5 md:gap-2.5 rounded-xl border border-line bg-card px-2 md:px-3.5 py-1.5 md:py-2 shadow-[0_1px_2px_rgba(16,24,40,0.04)] min-w-0">
+              <div 
+                onClick={() => setActiveTab('leaderboard')}
+                className="flex items-center gap-1.5 md:gap-2.5 rounded-xl border border-line bg-card px-2 md:px-3.5 py-1.5 md:py-2 shadow-[0_1px_2px_rgba(16,24,40,0.04)] min-w-0 cursor-pointer hover:bg-wash active:scale-95 transition-all select-none"
+              >
                 <Icon name="trophy" size={13} className="text-amber-500 shrink-0 md:scale-110" />
                 <div className="leading-tight min-w-0">
                   <div className="font-mono text-[13px] md:text-[15px] font-bold text-ink tabular-nums truncate">{myRank > 0 ? `${myRank}.` : '-'}</div>

@@ -199,15 +199,6 @@ export function MatchList({ matches, predictions, selectedId, onSelect, favorite
   
   return (
     <div className="flex flex-col gap-3">
-      <div className="flex items-center justify-between rounded-xl border border-line bg-card px-3.5 py-2.5 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
-        <span className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.16em] text-mid">
-          <Icon name="calendar" size={13} className="text-accent" />
-          Időrendi lista
-        </span>
-        <span className="font-mono text-[10px] font-bold text-mid bg-wash border border-line px-2 py-0.5 rounded-full">
-          {matches.length} meccs
-        </span>
-      </div>
 
       <div className="flex flex-col gap-3 md:max-h-[calc(100vh-320px)] md:overflow-y-auto md:pr-1.5 nice-scroll">
         {days.map((day) => (

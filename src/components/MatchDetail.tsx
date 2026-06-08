@@ -218,9 +218,9 @@ function ProbBar({ match, stats }: ProbBarProps) {
       </div>
 
       <div className="mt-4 rounded-xl border border-accent/25 bg-accent/[0.06] p-3.5 flex items-start gap-2.5">
-        <Icon name="sparkles" size={15} className="text-accent shrink-0 mt-0.5" />
+        <Icon name="newspaper" size={15} className="text-accent shrink-0 mt-0.5" />
         <p className="text-[12.5px] text-ink/90 leading-relaxed">
-          <span className="font-bold text-accent">AI szakértői tanács — </span>
+          <span className="font-bold text-accent">Összefoglaló — </span>
           {stats.prediction.advice}
         </p>
       </div>
@@ -981,9 +981,9 @@ export function MatchDetail({ match, prediction, onSave, favoriteTeam, teams = [
       {dbStats ? (
         <div className="divide-y divide-line bg-wash/50">
           <Section 
-            icon="sparkles" 
+            icon="trending" 
             iconColor="text-accent" 
-            title="AI valószínűségszámítás"
+            title="Elemzés"
             subtitle="A modell predikciós görbéje a korábbi meccsek és a sérülthelyzet alapján:"
           >
             <ProbBar match={match} stats={dbStats} />

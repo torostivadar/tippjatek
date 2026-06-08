@@ -53,7 +53,10 @@ export function Navigation({
   return (
     <>
       <nav className="fixed top-0 inset-x-0 h-16 z-50 px-4 md:px-6 flex items-center justify-between border-b border-line bg-card/85 backdrop-blur-xl">
-        <div className="flex items-center gap-3">
+        <div 
+          onClick={() => setActiveTab('matches')}
+          className="flex items-center gap-3 cursor-pointer select-none hover:opacity-90 active:scale-95 transition-all"
+        >
           <span className="w-9 h-9 rounded-xl bg-accent flex items-center justify-center text-white shadow-[0_8px_18px_-6px_rgba(124,58,237,0.8)]">
             <Icon name="target" size={20} strokeWidth={2.2} />
           </span>
