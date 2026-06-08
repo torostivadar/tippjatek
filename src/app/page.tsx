@@ -119,11 +119,7 @@ export default function Home() {
             {TEAMS_LIST.map(team => (
               <button
                 key={team}
-                onClick={() => {
-                  if (confirm(`Biztosan a(z) ${team} csapatot választod kedvencednek? Ezt a döntést a vb első meccsének kezdetéig (június 11. 21:00) még megváltoztathatod a profilodban!`)) {
-                    selectFavoriteTeam(team);
-                  }
-                }}
+                onClick={() => selectFavoriteTeam(team)}
                 className="w-full text-left p-3 text-[13px] font-semibold text-ink hover:bg-white hover:text-accent rounded-xl transition-colors flex items-center justify-between"
               >
                 <span>{team}</span>
