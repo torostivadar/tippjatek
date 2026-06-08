@@ -275,7 +275,7 @@ function H2HBlock({ match, stats }: { match: Match; stats: MatchStats }) {
       return `${y}/${m}/${d}`;
     }
     if (dateStr.length === 4 && !isNaN(Number(dateStr))) {
-      return dateStr.slice(-2);
+      return `${dateStr}.`;
     }
     return dateStr;
   };
