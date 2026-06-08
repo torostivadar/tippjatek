@@ -679,6 +679,13 @@ export function MatchDetail({ match, prediction, onSave, favoriteTeam, teams = [
           injuries: teamAObj.injuries ?? updatedStats.teamA?.injuries ?? [],
           form: (teamAObj.form as any) ?? updatedStats.teamA?.form ?? []
         };
+        if (updatedStats.prediction) {
+          updatedStats.prediction = {
+            ...updatedStats.prediction,
+            attackA: teamAObj.attack_rating ?? updatedStats.prediction.attackA ?? 50,
+            defenseA: teamAObj.defense_rating ?? updatedStats.prediction.defenseA ?? 50
+          };
+        }
       }
       if (teamBObj) {
         updatedStats.teamB = {
@@ -687,6 +694,13 @@ export function MatchDetail({ match, prediction, onSave, favoriteTeam, teams = [
           injuries: teamBObj.injuries ?? updatedStats.teamB?.injuries ?? [],
           form: (teamBObj.form as any) ?? updatedStats.teamB?.form ?? []
         };
+        if (updatedStats.prediction) {
+          updatedStats.prediction = {
+            ...updatedStats.prediction,
+            attackB: teamBObj.attack_rating ?? updatedStats.prediction.attackB ?? 50,
+            defenseB: teamBObj.defense_rating ?? updatedStats.prediction.defenseB ?? 50
+          };
+        }
       }
       setDbStats(updatedStats);
     } else {
