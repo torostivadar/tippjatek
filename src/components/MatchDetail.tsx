@@ -363,15 +363,25 @@ function H2HBlock({ match, stats }: { match: Match; stats: MatchStats }) {
             let scoreStr = '';
 
             if (h.res) {
-              const matchRes = h.res.match(/^([A-Za-z]{3})\s*(\d+\s*-\s*\d+)\s*([A-Za-z]{3})$/i);
-              if (matchRes) {
-                teamAAbbr = matchRes[1].toUpperCase();
-                scoreStr = matchRes[2];
-                teamBAbbr = matchRes[3].toUpperCase();
+              const scoreMatch = h.res.match(/(\d+)\s*-\s*(\d+)/);
+              if (scoreMatch) {
+                const scoreIndex = h.res.indexOf(scoreMatch[0]);
+                const homePart = h.res.substring(0, scoreIndex).trim();
+                const awayPart = h.res.substring(scoreIndex + scoreMatch[0].length).trim();
+                teamAAbbr = getAbbreviationCode(homePart);
+                teamBAbbr = getAbbreviationCode(awayPart);
+                scoreStr = scoreMatch[0];
               } else {
-                teamAAbbr = h.home ? getAbbreviationCode(h.home) : '';
-                teamBAbbr = h.away ? getAbbreviationCode(h.away) : '';
-                scoreStr = h.score || '';
+                const matchRes = h.res.match(/^([A-Za-z]{3})\s*(\d+\s*-\s*\d+)\s*([A-Za-z]{3})$/i);
+                if (matchRes) {
+                  teamAAbbr = matchRes[1].toUpperCase();
+                  scoreStr = matchRes[2];
+                  teamBAbbr = matchRes[3].toUpperCase();
+                } else {
+                  teamAAbbr = h.home ? getAbbreviationCode(h.home) : '';
+                  teamBAbbr = h.away ? getAbbreviationCode(h.away) : '';
+                  scoreStr = h.score || '';
+                }
               }
             } else {
               teamAAbbr = h.home ? getAbbreviationCode(h.home) : '';
