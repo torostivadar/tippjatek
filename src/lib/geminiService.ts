@@ -60,8 +60,35 @@ A válaszod KIZÁRÓLAG ez a JSON struktúra legyen, semmi más:
 
   const client = apiKey ? new GoogleGenAI({ apiKey }) : genAI;
   let response;
+
+  // Helper to execute API calls with retries for temporary errors (503, 429, etc.)
+  const callWithRetry = async (config: any, retries = 3, initialDelay = 1500) => {
+    let delay = initialDelay;
+    for (let i = 0; i < retries; i++) {
+      try {
+        return await client.models.generateContent(config);
+      } catch (err: any) {
+        const errStr = String(err.message || err);
+        const isTemporary =
+          errStr.includes('503') ||
+          errStr.includes('UNAVAILABLE') ||
+          errStr.includes('429') ||
+          errStr.includes('high demand') ||
+          errStr.includes('overloaded');
+
+        if (isTemporary && i < retries - 1) {
+          console.warn(`⚠️ Gemini API temporary error (503/429), retrying in ${delay}ms... (Attempt ${i + 1}/${retries})`);
+          await new Promise((resolve) => setTimeout(resolve, delay));
+          delay *= 2;
+          continue;
+        }
+        throw err;
+      }
+    }
+  };
+
   try {
-    response = await client.models.generateContent({
+    response = await callWithRetry({
       model: 'gemini-2.5-flash',
       contents: prompt,
       config: {
@@ -71,16 +98,27 @@ A válaszod KIZÁRÓLAG ez a JSON struktúra legyen, semmi más:
     });
   } catch (err: any) {
     console.warn(`⚠️ Gemini Search Grounding failed: ${err.message || err}. Retrying WITHOUT Search Grounding...`);
-    response = await client.models.generateContent({
-      model: 'gemini-2.5-flash',
-      contents: prompt,
-      config: {
-        temperature: 0.7,
-      },
-    });
+    try {
+      response = await callWithRetry({
+        model: 'gemini-2.5-flash',
+        contents: prompt,
+        config: {
+          temperature: 0.7,
+        },
+      });
+    } catch (fallbackErr: any) {
+      const errStr = String(fallbackErr.message || fallbackErr);
+      if (errStr.includes('503') || errStr.includes('UNAVAILABLE') || errStr.includes('high demand')) {
+        throw new Error('A Google Gemini API jelenleg túlterhelt (503 Service Unavailable). Kérjük, próbáld újra egy kis idő múlva!');
+      }
+      if (errStr.includes('429') || errStr.includes('quota')) {
+        throw new Error('A Google Gemini API elélte a másodpercenkénti/napi lekérdezési korlátot (429 Rate Limit). Kérjük, próbáld újra egy kis idő múlva!');
+      }
+      throw fallbackErr;
+    }
   }
 
-  const text = (response.text ?? '').trim();
+  const text = (response?.text ?? '').trim();
 
   if (!text) {
     throw new Error('Gemini üres választ adott vissza. Ez biztonsági szűrők vagy átmeneti hálózati hiba miatt fordulhat elő.');
