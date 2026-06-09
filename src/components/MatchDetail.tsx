@@ -859,7 +859,8 @@ export function MatchDetail({ match, prediction, onSave, favoriteTeam, teams = [
     match.team_a.startsWith('L-');
 
   const theme = getGroupTheme(match.group);
-  const hasChanges = a !== (prediction?.predicted_a ?? 0) || b !== (prediction?.predicted_b ?? 0) || isTuti !== (prediction?.is_tuti ?? false);
+  const hasPrediction = !!prediction;
+  const hasChanges = !hasPrediction || a !== (prediction?.predicted_a ?? 0) || b !== (prediction?.predicted_b ?? 0) || isTuti !== (prediction?.is_tuti ?? false);
   const result = isFinished && match.score_a !== null && match.score_b !== null ? computeResult(match, prediction, favoriteTeam) : null;
   const isFav = !!(favoriteTeam && (match.team_a === favoriteTeam || match.team_b === favoriteTeam));
 
