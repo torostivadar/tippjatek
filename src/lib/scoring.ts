@@ -1,6 +1,6 @@
 import { db } from '@/src/db';
 import { matches, predictions, profiles, eliminatedTeams } from '@/src/db/schema';
-import { eq } from 'drizzle-orm';
+import { eq, or } from 'drizzle-orm';
 
 export async function scoreMatch(
   matchId: string,
@@ -11,27 +11,30 @@ export async function scoreMatch(
 ) {
   console.log(`Scoring match ${matchId}: score=${scoreA}:${scoreB}, status=${status}, loser=${loserTeamName}`);
 
+  const finalScoreA = status === 'NOT_STARTED' ? null : (scoreA !== null ? Number(scoreA) : null);
+  const finalScoreB = status === 'NOT_STARTED' ? null : (scoreB !== null ? Number(scoreB) : null);
+
   // 1. Update the match in the database
   await db
     .update(matches)
     .set({
-      score_a: scoreA !== null ? Number(scoreA) : null,
-      score_b: scoreB !== null ? Number(scoreB) : null,
+      score_a: finalScoreA,
+      score_b: finalScoreB,
       status: status,
     })
     .where(eq(matches.id, matchId));
 
-  // 2. If finished, run scoring calculations
-  if (status === 'FINISHED' && scoreA !== null && scoreB !== null) {
-    const actA = Number(scoreA);
-    const actB = Number(scoreB);
+  // 2. Fetch the match record
+  const [matchRecord] = await db
+    .select()
+    .from(matches)
+    .where(eq(matches.id, matchId))
+    .limit(1);
 
-    // Fetch the match record to get the group
-    const [matchRecord] = await db
-      .select()
-      .from(matches)
-      .where(eq(matches.id, matchId))
-      .limit(1);
+  // 3. Handle scoring calculations based on status
+  if (status === 'FINISHED' && finalScoreA !== null && finalScoreB !== null) {
+    const actA = finalScoreA;
+    const actB = finalScoreB;
 
     if (matchRecord) {
       const isKnockout = ['Legjobb 32', 'Nyolcaddöntő', 'Negyeddöntő', 'Elődöntő', 'Bronzmérkőzés', 'Döntő'].includes(matchRecord.group);
@@ -110,61 +113,83 @@ export async function scoreMatch(
         .set({ points_earned: earned })
         .where(eq(predictions.id, pred.id));
     }
+  } else {
+    // If NOT finished (NOT_STARTED or LIVE), reset points_earned on predictions to null
+    await db
+      .update(predictions)
+      .set({ points_earned: null })
+      .where(eq(predictions.match_id, matchId));
 
-    // 3. Recalculate profiles' total points, correct scores, and correct outcomes
-    const allProfiles = await db.select().from(profiles);
-    
-    for (const prof of allProfiles) {
-      const userPredictions = await db
-        .select()
-        .from(predictions)
-        .where(eq(predictions.user_id, prof.id));
+    // Remove teams from eliminated list if it was a knockout match
+    if (matchRecord) {
+      const isKnockout = ['Legjobb 32', 'Nyolcaddöntő', 'Negyeddöntő', 'Elődöntő', 'Bronzmérkőzés', 'Döntő'].includes(matchRecord.group);
+      if (isKnockout) {
+        await db
+          .delete(eliminatedTeams)
+          .where(
+            or(
+              eq(eliminatedTeams.team_name, matchRecord.team_a),
+              eq(eliminatedTeams.team_name, matchRecord.team_b)
+            )
+          );
+        console.log(`Knockout match reverted: removed ${matchRecord.team_a} and ${matchRecord.team_b} from eliminatedTeams`);
+      }
+    }
+  }
 
-      let totalPoints = 0;
-      let teli = 0;
-      let kim = 0;
+  // 4. Recalculate profiles' total points, correct scores, and correct outcomes
+  const allProfiles = await db.select().from(profiles);
+  
+  for (const prof of allProfiles) {
+    const userPredictions = await db
+      .select()
+      .from(predictions)
+      .where(eq(predictions.user_id, prof.id));
 
-      for (const p of userPredictions) {
-        if (p.points_earned !== null) {
-          totalPoints += p.points_earned;
-          
-          const [m] = await db.select().from(matches).where(eq(matches.id, p.match_id)).limit(1);
-          if (m && m.score_a !== null && m.score_b !== null) {
-            const mA = m.score_a;
-            const mB = m.score_b;
-            if (mA === p.predicted_a && mB === p.predicted_b) {
-              teli += 1;
-            } else if ((mA > mB && p.predicted_a > p.predicted_b) || (mA < mB && p.predicted_a < p.predicted_b) || (mA === mB && p.predicted_a === p.predicted_b)) {
-              kim += 1;
-            }
+    let totalPoints = 0;
+    let teli = 0;
+    let kim = 0;
+
+    for (const p of userPredictions) {
+      if (p.points_earned !== null) {
+        totalPoints += p.points_earned;
+        
+        const [m] = await db.select().from(matches).where(eq(matches.id, p.match_id)).limit(1);
+        if (m && m.status === 'FINISHED' && m.score_a !== null && m.score_b !== null) {
+          const mA = m.score_a;
+          const mB = m.score_b;
+          if (mA === p.predicted_a && mB === p.predicted_b) {
+            teli += 1;
+          } else if ((mA > mB && p.predicted_a > p.predicted_b) || (mA < mB && p.predicted_a < p.predicted_b) || (mA === mB && p.predicted_a === p.predicted_b)) {
+            kim += 1;
           }
         }
       }
-
-      // Add World Cup Champion prediction bonus (+150 points) if final match is finished
-      const finalMatchId = '104';
-      const [finalMatch] = await db
-        .select()
-        .from(matches)
-        .where(eq(matches.id, finalMatchId))
-        .limit(1);
-
-      if (finalMatch && finalMatch.status === 'FINISHED' && finalMatch.score_a !== null && finalMatch.score_b !== null) {
-        const champion = finalMatch.score_a > finalMatch.score_b ? finalMatch.team_a : finalMatch.team_b;
-        if (prof.champion_prediction === champion) {
-          totalPoints += 150;
-        }
-      }
-
-      // Save profile statistics
-      await db
-        .update(profiles)
-        .set({
-          points: totalPoints,
-          correct_scores: teli,
-          correct_outcomes: kim
-        })
-        .where(eq(profiles.id, prof.id));
     }
+
+    // Add World Cup Champion prediction bonus (+150 points) if final match is finished
+    const finalMatchId = '104';
+    const [finalMatch] = await db
+      .select()
+      .from(matches)
+      .where(eq(matches.id, finalMatchId))
+      .limit(1);
+
+    if (finalMatch && finalMatch.status === 'FINISHED' && finalMatch.score_a !== null && finalMatch.score_b !== null) {
+      const champion = finalMatch.score_a > finalMatch.score_b ? finalMatch.team_a : finalMatch.team_b;
+      if (prof.champion_prediction === champion) {
+        totalPoints += 150;
+      }
+    }
+
+    // Save profile statistics
+    await db
+      .update(profiles)
+      .set({
+        points: totalPoints,
+        correct_scores: teli,
+        correct_outcomes: kim
+      })
+      .where(eq(profiles.id, prof.id));
   }
 }
