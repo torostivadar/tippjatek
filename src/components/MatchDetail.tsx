@@ -435,6 +435,93 @@ function H2HBlock({ match, stats }: { match: Match; stats: MatchStats }) {
   );
 }
 
+interface OtherPrediction {
+  predicted_a: number;
+  predicted_b: number;
+  is_tuti: boolean;
+  points_earned: number | null;
+  user_id: string;
+  username: string;
+  avatar: string | null;
+}
+
+function FriendsTipsBlock({
+  match,
+  otherPredictions,
+  loading,
+  currentUserId,
+}: {
+  match: Match;
+  otherPredictions: OtherPrediction[];
+  loading: boolean;
+  currentUserId: string | null;
+}) {
+  const hasStarted = match.status === 'LIVE' || match.status === 'FINISHED' || new Date() >= new Date(match.start_time);
+
+  if (loading) {
+    return (
+      <div className="flex items-center gap-2 py-4 justify-center text-mid text-xs">
+        <span className="w-4 h-4 border-2 border-accent border-t-transparent rounded-full animate-spin" />
+        Lekérdezés...
+      </div>
+    );
+  }
+
+  if (!hasStarted) {
+    return (
+      <div className="flex items-center gap-2.5 bg-wash border border-line rounded-2xl p-4 text-[12.5px] text-mid font-medium select-none">
+        <Icon name="eyeoff" size={15} className="text-mid/80 shrink-0" />
+        <span>A többi játékos tippje a meccs kezdetéig nem látható (csak semmi spoiler!).</span>
+      </div>
+    );
+  }
+
+  // Filter out current user's prediction to only show others
+  const others = otherPredictions.filter(p => p.user_id !== currentUserId);
+
+  if (others.length === 0) {
+    return (
+      <div className="text-center py-5 text-xs text-faint italic border border-line bg-card rounded-2xl">
+        Még senki más nem tippelt erre a mérkőzésre.
+      </div>
+    );
+  }
+
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5">
+      {others.map((p, idx) => {
+        const hasPoints = p.points_earned !== null;
+        return (
+          <div 
+            key={idx} 
+            className="flex items-center justify-between p-3 rounded-2xl border border-line bg-card shadow-[0_1px_2px_rgba(16,24,40,0.04)]"
+          >
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="text-base select-none shrink-0">{p.avatar || '👤'}</span>
+              <span className="text-xs font-bold text-ink truncate">{p.username}</span>
+            </div>
+            
+            <div className="flex items-center gap-2 shrink-0">
+              <span className="font-mono text-[11px] font-bold text-ink bg-wash border border-line px-2 py-0.5 rounded-md">
+                {p.predicted_a} - {p.predicted_b} {p.is_tuti && '⭐️'}
+              </span>
+              {hasPoints && (
+                <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider ${
+                  p.points_earned > 0 
+                    ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' 
+                    : 'bg-slate-100 border border-line text-mid'
+                }`}>
+                  {p.points_earned > 0 ? `+${p.points_earned}p` : '0p'}
+                </span>
+              )}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 function FormBlock({ match, stats }: { match: Match; stats: MatchStats }) {
   const getFormStyle = (o: string) => {
     if (o === 'W') return 'bg-emerald-50 border-emerald-200 text-emerald-600';
@@ -648,6 +735,62 @@ export function MatchDetail({ match, prediction, onSave, favoriteTeam, teams = [
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState(false);
   const [dbStats, setDbStats] = useState<MatchStats | null>(null);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [otherPredictions, setOtherPredictions] = useState<OtherPrediction[]>([]);
+  const [loadingOthers, setLoadingOthers] = useState(false);
+
+  // Load current user ID
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user) {
+        setCurrentUserId(user.id);
+      }
+    });
+  }, []);
+
+  // Fetch other predictions on match load/change
+  useEffect(() => {
+    const fetchOtherPredictions = async () => {
+      setLoadingOthers(true);
+      try {
+        const { data, error } = await supabase
+          .from('predictions')
+          .select(`
+            predicted_a,
+            predicted_b,
+            is_tuti,
+            points_earned,
+            user_id,
+            profiles (
+              username,
+              avatar
+            )
+          `)
+          .eq('match_id', match.id);
+
+        if (error) throw error;
+
+        if (data) {
+          const formatted = (data as any[]).map(x => ({
+            predicted_a: x.predicted_a,
+            predicted_b: x.predicted_b,
+            is_tuti: x.is_tuti,
+            points_earned: x.points_earned,
+            user_id: x.user_id,
+            username: x.profiles?.username || 'Játékos',
+            avatar: x.profiles?.avatar || '👤'
+          }));
+          setOtherPredictions(formatted);
+        }
+      } catch (err) {
+        console.error('Hiba a többi tipp lekérésekor:', err);
+      } finally {
+        setLoadingOthers(false);
+      }
+    };
+
+    fetchOtherPredictions();
+  }, [match.id]);
 
   // Sync state on match swap
   useEffect(() => {
@@ -1004,6 +1147,20 @@ export function MatchDetail({ match, prediction, onSave, favoriteTeam, teams = [
       {/* 4. Statistics */}
       {dbStats ? (
         <div className="divide-y divide-line bg-wash/50">
+          {!isTBD && (
+            <Section 
+              icon="eye" 
+              title="Többi játékos tippjei"
+              subtitle="A többi résztvevő tippje és elért pontszáma ezen a mérkőzésen:"
+            >
+              <FriendsTipsBlock 
+                match={match} 
+                otherPredictions={otherPredictions} 
+                loading={loadingOthers} 
+                currentUserId={currentUserId} 
+              />
+            </Section>
+          )}
           <Section 
             icon="trending" 
             iconColor="text-accent" 
