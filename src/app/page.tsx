@@ -169,7 +169,7 @@ export default function Home() {
           <div>
             <h1 className="text-3xl md:text-[40px] font-bold text-ink tracking-tight font-display leading-[1.05]">
               {activeTab === 'matches' ? 'Mérkőzések & elemzések' : 
-               activeTab === 'leaderboard' ? 'Globális tippbajnokság' : 
+               activeTab === 'leaderboard' ? 'Tippbajnokság' : 
                activeTab === 'groups' ? 'Csoportok & Ágrajz' : 'Játékszabály'}
             </h1>
             <p className="text-mid text-[13px] mt-2 max-w-xl leading-relaxed">
