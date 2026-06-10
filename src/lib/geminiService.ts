@@ -12,7 +12,7 @@ export async function generateMatchAIData(
   teamB: string,
   apiKey?: string
 ): Promise<MatchStats> {
-  const prompt = `Használd a Google Keresést! Nézz utána a legfrissebb híreknek a ${teamA} és ${teamB} közötti 2026-os labdarúgó-világbajnoki mérkőzéssel kapcsolatban.
+  const prompt = `Használd a Google Keresést! Nézz utána a legfrissebb híreknek és oddsoknak (különösen a Tippmixpro kínálatát figyelembe véve: https://www.tippmixpro.hu/hu/fogadas/i/fogadas/labdarugas/1/vilag/240/helyszin) a ${teamA} és ${teamB} közötti 2026-os labdarúgó-világbajnoki mérkőzéssel kapcsolatban.
 
 Töltsd fel az alábbi JSON struktúrát valós, friss adatokkal, KIZÁRÓLAG magyar nyelven!
 
