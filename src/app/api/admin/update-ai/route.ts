@@ -4,6 +4,7 @@ import { matches } from '@/src/db/schema';
 import { sql } from 'drizzle-orm';
 import { generateMatchAIData } from '@/src/lib/geminiService';
 import { createClient } from '@supabase/supabase-js';
+import { updateAiPlayerPrediction } from '@/src/lib/aiPlayer';
 
 /**
  * Admin endpoint to manually trigger AI data regeneration for a single match.
@@ -87,6 +88,9 @@ export async function POST(req: NextRequest) {
       .where(sql`${matches.id} = ${matchId}`);
 
     console.log(`✓ Admin AI data saved for match #${matchId}`);
+
+    // Update AI player (Claudius) prediction
+    await updateAiPlayerPrediction(matchId, aiData);
 
     return NextResponse.json({
       success: true,

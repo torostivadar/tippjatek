@@ -3,6 +3,7 @@ import { db } from '@/src/db';
 import { matches, teams as teamsTable } from '@/src/db/schema';
 import { and, gte, lte, sql } from 'drizzle-orm';
 import { generateMatchAIData } from '@/src/lib/geminiService';
+import { updateAiPlayerPrediction } from '@/src/lib/aiPlayer';
 
 /**
  * Daily Cron Job: /api/cron/update-ai
@@ -82,6 +83,10 @@ export async function GET(req: NextRequest) {
           .where(sql`${matches.id} = ${match.id}`);
 
         console.log(`✓ AI data saved for match #${match.id}`);
+
+        // Update AI player (Claudius) prediction
+        await updateAiPlayerPrediction(match.id, aiData);
+
         updatedCount++;
 
         // Small delay between API calls to be respectful
