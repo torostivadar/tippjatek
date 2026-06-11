@@ -29,8 +29,8 @@ export function Leaderboard({ profiles, currentUserId }: LeaderboardProps) {
             <Icon name="trophy" size={20} className="text-amber-500" />
           </span>
           <div>
-            <h2 className="text-lg font-bold text-ink font-display">Cimbik Nugaton Liga</h2>
-            <p className="text-[11px] text-faint font-medium">Sírni csak a győztesnek szabad.</p>
+            <h2 className="text-lg font-bold text-ink font-display">Cimbik Nyugaton Liga</h2>
+            <p className="text-[11px] text-faint font-medium">Sírni csak a győztesnek szabad</p>
           </div>
         </div>
 
