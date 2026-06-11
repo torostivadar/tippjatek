@@ -126,8 +126,14 @@ export default function AdminPage() {
       .order('id', { ascending: true }); // ID ordering to easily find matches 1-104
 
     if (data) {
+      const formatted = data.map(m => {
+        if (m.start_time && !m.start_time.endsWith('Z')) {
+          return { ...m, start_time: `${m.start_time}Z` };
+        }
+        return m;
+      });
       // Cast the string IDs to numbers to sort numerically (1, 2, ..., 104)
-      const sorted = [...data].sort((a, b) => Number(a.id) - Number(b.id));
+      const sorted = [...formatted].sort((a, b) => Number(a.id) - Number(b.id));
       setMatches(sorted);
     }
   };

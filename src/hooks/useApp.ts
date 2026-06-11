@@ -67,7 +67,13 @@ export function useApp() {
         .select('*')
         .order('start_time', { ascending: true });
       
-      setMatches(matchData || []);
+      const formattedMatches = (matchData || []).map(m => {
+        if (m.start_time && !m.start_time.endsWith('Z')) {
+          return { ...m, start_time: `${m.start_time}Z` };
+        }
+        return m;
+      });
+      setMatches(formattedMatches);
 
       // 3. Fetch predictions for current user
       const { data: predictionData } = await supabase
@@ -120,10 +126,16 @@ export function useApp() {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'matches' }, (payload) => {
         if (payload.eventType === 'UPDATE') {
           const updated = payload.new as Match;
-          setMatches(prev => prev.map(m => m.id === updated.id ? updated : m));
+          const formatted = updated.start_time && !updated.start_time.endsWith('Z')
+            ? { ...updated, start_time: `${updated.start_time}Z` }
+            : updated;
+          setMatches(prev => prev.map(m => m.id === formatted.id ? formatted : m));
         } else if (payload.eventType === 'INSERT') {
           const inserted = payload.new as Match;
-          setMatches(prev => [...prev, inserted].sort((a, b) => a.start_time.localeCompare(b.start_time)));
+          const formatted = inserted.start_time && !inserted.start_time.endsWith('Z')
+            ? { ...inserted, start_time: `${inserted.start_time}Z` }
+            : inserted;
+          setMatches(prev => [...prev, formatted].sort((a, b) => a.start_time.localeCompare(b.start_time)));
         }
       })
       .subscribe();
