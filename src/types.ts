@@ -9,6 +9,7 @@ export interface Match {
   group: string;
   ai_data?: MatchStats | null;
   last_ai_updated?: string | null;
+  last_sync_attempt?: string | null;
   tv_channel?: string | null;
   venue_name?: string | null;
   venue_city?: string | null;

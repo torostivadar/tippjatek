@@ -53,6 +53,7 @@ export const matches = pgTable('matches', {
   api_fixture_id: integer('api_fixture_id'), // API-Football fixture ID mapping
   ai_data: jsonb('ai_data'), // Structured AI analysis data (Gemini output)
   last_ai_updated: timestamp('last_ai_updated'), // When AI data was last refreshed
+  last_sync_attempt: timestamp('last_sync_attempt'), // Throttling timestamp for live score syncs
 
   // Venue & broadcast data (from all_matches_h2h.md)
   tv_channel: text('tv_channel'),            // "M4 Sport (Hun)" or null
