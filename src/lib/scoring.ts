@@ -64,15 +64,13 @@ export async function scoreMatch(
       .from(predictions)
       .where(eq(predictions.match_id, matchId));
 
-    for (const pred of matchPredictions) {
-      // Fetch prediction owner's profile to check their favorite team
-      const [profile] = await db
-        .select()
-        .from(profiles)
-        .where(eq(profiles.id, pred.user_id))
-        .limit(1);
+    // Optimize: Fetch all profiles once to avoid N+1 queries in the loop below
+    const allProfiles = await db.select().from(profiles);
+    const profileMap = new Map(allProfiles.map(p => [p.id, p]));
 
-      if (!profile) continue;
+    const predictionUpdates = matchPredictions.map(async (pred) => {
+      const profile = profileMap.get(pred.user_id);
+      if (!profile) return;
 
       const pA = pred.predicted_a;
       const pB = pred.predicted_b;
@@ -112,7 +110,9 @@ export async function scoreMatch(
         .update(predictions)
         .set({ points_earned: earned })
         .where(eq(predictions.id, pred.id));
-    }
+    });
+
+    await Promise.all(predictionUpdates);
   } else {
     // If NOT finished (NOT_STARTED or LIVE), reset points_earned on predictions to null
     await db
@@ -138,15 +138,29 @@ export async function scoreMatch(
   }
 
   // 4. Recalculate profiles' total points, correct scores, and correct outcomes
+  // Optimize: Fetch all profiles, matches, and predictions in memory to avoid N+1 queries (1000+ DB queries)
   const allProfiles = await db.select().from(profiles);
-  
-  for (const prof of allProfiles) {
-    const userPredictions = await db
-      .select()
-      .from(predictions)
-      .where(eq(predictions.user_id, prof.id));
+  const allMatches = await db.select().from(matches);
+  const allPredictions = await db.select().from(predictions);
+  const allEliminated = await db.select().from(eliminatedTeams);
 
-    let totalPoints = 0;
+  const matchMap = new Map(allMatches.map(m => [m.id, m]));
+  const eliminatedSet = new Set(allEliminated.map(e => e.team_name));
+  const predictionsByUser = new Map<string, typeof allPredictions>();
+  for (const p of allPredictions) {
+    if (!predictionsByUser.has(p.user_id)) {
+      predictionsByUser.set(p.user_id, []);
+    }
+    predictionsByUser.get(p.user_id)!.push(p);
+  }
+
+  const finalMatchId = '104';
+  const finalMatch = matchMap.get(finalMatchId);
+  
+  const profileUpdates = allProfiles.map(async (prof) => {
+    const userPredictions = predictionsByUser.get(prof.id) || [];
+
+    let totalPoints = prof.crossroads_bonus || 0;
     let teli = 0;
     let kim = 0;
 
@@ -154,7 +168,7 @@ export async function scoreMatch(
       if (p.points_earned !== null) {
         totalPoints += p.points_earned;
         
-        const [m] = await db.select().from(matches).where(eq(matches.id, p.match_id)).limit(1);
+        const m = matchMap.get(p.match_id);
         if (m && m.status === 'FINISHED' && m.score_a !== null && m.score_b !== null) {
           const mA = m.score_a;
           const mB = m.score_b;
@@ -168,15 +182,18 @@ export async function scoreMatch(
     }
 
     // Add World Cup Champion prediction bonus (+150 points) if final match is finished
-    const finalMatchId = '104';
-    const [finalMatch] = await db
-      .select()
-      .from(matches)
-      .where(eq(matches.id, finalMatchId))
-      .limit(1);
-
     if (finalMatch && finalMatch.status === 'FINISHED' && finalMatch.score_a !== null && finalMatch.score_b !== null) {
-      const champion = finalMatch.score_a > finalMatch.score_b ? finalMatch.team_a : finalMatch.team_b;
+      let champion = finalMatch.score_a > finalMatch.score_b ? finalMatch.team_a : finalMatch.team_b;
+      
+      // If the final ended in a draw, the champion is the one NOT in eliminated_teams (since the loser is eliminated)
+      if (finalMatch.score_a === finalMatch.score_b) {
+        if (eliminatedSet.has(finalMatch.team_a)) {
+          champion = finalMatch.team_b;
+        } else if (eliminatedSet.has(finalMatch.team_b)) {
+          champion = finalMatch.team_a;
+        }
+      }
+
       if (prof.champion_prediction === champion) {
         totalPoints += 150;
       }
@@ -191,5 +208,7 @@ export async function scoreMatch(
         correct_outcomes: kim
       })
       .where(eq(profiles.id, prof.id));
-  }
+  });
+
+  await Promise.all(profileUpdates);
 }

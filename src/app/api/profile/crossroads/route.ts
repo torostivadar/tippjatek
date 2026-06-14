@@ -69,6 +69,7 @@ export async function POST(req: NextRequest) {
         .set({
           favorite_team: newFavoriteTeam,
           has_transferred: true,
+          crossroads_bonus: -30,
           points: profile.points - 30
         })
         .where(eq(profiles.id, user.id));
@@ -80,6 +81,7 @@ export async function POST(req: NextRequest) {
         .update(profiles)
         .set({
           has_transferred: true,
+          crossroads_bonus: 30,
           points: profile.points + 30
         })
         .where(eq(profiles.id, user.id));

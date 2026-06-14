@@ -62,6 +62,7 @@ export interface Profile {
   favorite_team?: string | null;
   champion_prediction?: string | null;
   has_transferred: boolean;
+  crossroads_bonus: number;
   avatar?: string | null;
 }
 

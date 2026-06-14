@@ -3,14 +3,33 @@ import { db } from '@/src/db';
 import { matches } from '@/src/db/schema';
 import { and, eq, not, inArray } from 'drizzle-orm';
 import { syncMatchesAndScore } from '@/src/lib/matchService';
+import { supabase } from '@/src/lib/supabase';
+
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 export async function GET(req: NextRequest) {
   try {
-    // 1. Log request source.
+    // 1. Authenticate source (must be Vercel Cron OR an authenticated user of our app)
     const authHeader = req.headers.get('Authorization') || '';
     const cronSecret = process.env.CRON_SECRET || '';
     const isCron = cronSecret && authHeader === `Bearer ${cronSecret}`;
-    console.log(`Cron route triggered (Source: ${isCron ? 'Vercel Cron' : 'On-Demand Public Client'}).`);
+
+    if (!isCron) {
+      const token = authHeader.replace('Bearer ', '');
+      if (!token) {
+        return NextResponse.json({ error: 'Unauthorized – missing credentials' }, { status: 401 });
+      }
+
+      const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+      if (authError || !user) {
+        return NextResponse.json({ error: 'Unauthorized – invalid credentials' }, { status: 401 });
+      }
+
+      console.log(`Cron route triggered (Source: Authenticated User [${user.email}]).`);
+    } else {
+      console.log('Cron route triggered (Source: Vercel Cron).');
+    }
 
     // 2. Fetch all unfinished matches from our database.
     const unfinishedMatches = await db

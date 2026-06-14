@@ -76,13 +76,72 @@ export async function POST(req: NextRequest) {
 
     // 6. Generate AI data
     console.log(`Admin AI refresh for match #${matchId}: ${match.team_a} vs ${match.team_b}`);
-    const aiData = await generateMatchAIData(match.team_a, match.team_b);
+    
+    const matchDateObj = match.start_time ? new Date(match.start_time) : null;
+    let matchDateStr: string | undefined = undefined;
+    if (matchDateObj) {
+      const year = matchDateObj.getFullYear();
+      const month = matchDateObj.getMonth() + 1;
+      const day = matchDateObj.getDate();
+      matchDateStr = `${year}. ${month}. ${day}.`;
+    }
+
+    const aiData = await generateMatchAIData(match.team_a, match.team_b, matchDateStr);
+
+    // Safe Merge & Fallback Logic
+    const oldAiData = match.ai_data as any;
+    let finalAiData = { ...aiData };
+
+    if (oldAiData) {
+      // 1. Safe Merging for Odds
+      if (
+        (!aiData.odds || aiData.odds.winA === 0 || aiData.odds.winA === null) &&
+        oldAiData.odds &&
+        oldAiData.odds.winA !== 0
+      ) {
+        finalAiData.odds = oldAiData.odds;
+      }
+
+      // 2. Safe Merging for News
+      const isNewsPlaceholder = (newsArray: any[]) => {
+        if (!newsArray || newsArray.length === 0) return true;
+        if (newsArray.length === 1) {
+          const text = newsArray[0].text || '';
+          return (
+            text.includes('Nincs friss') ||
+            text.includes('nem valós') ||
+            text.includes('nem lehetséges') ||
+            text.includes('Nincs információ')
+          );
+        }
+        return false;
+      };
+
+      if (isNewsPlaceholder(aiData.news) && oldAiData.news && !isNewsPlaceholder(oldAiData.news)) {
+        finalAiData.news = oldAiData.news;
+      }
+
+      // 3. Safe Merging for H2H
+      const isH2HPlaceholder = (h2hArray: any[]) => {
+        if (!h2hArray || h2hArray.length === 0) return true;
+        if (h2hArray.length === 1) {
+          const res = h2hArray[0].res || '';
+          return res.includes('Nincs hivatalos') || res.includes('Nincs korábbi');
+        }
+        return false;
+      };
+
+      if (isH2HPlaceholder(aiData.h2hHistory) && oldAiData.h2hHistory && !isH2HPlaceholder(oldAiData.h2hHistory)) {
+        finalAiData.h2hHistory = oldAiData.h2hHistory;
+        finalAiData.h2hSummary = oldAiData.h2hSummary;
+      }
+    }
 
     // 7. Save to database
     await db
       .update(matches)
       .set({
-        ai_data: aiData as any,
+        ai_data: finalAiData as any,
         last_ai_updated: new Date(),
       })
       .where(sql`${matches.id} = ${matchId}`);
@@ -90,7 +149,7 @@ export async function POST(req: NextRequest) {
     console.log(`✓ Admin AI data saved for match #${matchId}`);
 
     // Update AI player (Claudius) prediction
-    await updateAiPlayerPrediction(matchId, aiData);
+    await updateAiPlayerPrediction(matchId, finalAiData);
 
     return NextResponse.json({
       success: true,

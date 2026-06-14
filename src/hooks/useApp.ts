@@ -106,8 +106,16 @@ export function useApp() {
       
       setTeams(teamData || []);
 
-      // Trigger background API sync (on-demand / lazy sync)
-      fetch('/api/cron/update-live').catch(err => console.error('On-demand sync error:', err));
+      // Trigger background API sync (on-demand / lazy sync) with authentication
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        if (session?.access_token) {
+          fetch(`/api/cron/update-live?t=${Date.now()}`, {
+            headers: {
+              Authorization: `Bearer ${session.access_token}`
+            }
+          }).catch(err => console.error('On-demand sync error:', err));
+        }
+      });
 
     } catch (err) {
       console.error('Error fetching data:', err);

@@ -11,6 +11,7 @@ export const profiles = pgTable('profiles', {
   favorite_team: text('favorite_team'), // User's selected favorite team for "Fan Factor" (double points)
   champion_prediction: text('champion_prediction'), // User's prediction for World Cup winner
   has_transferred: boolean('has_transferred').default(false).notNull(), // Has transferred favorite team after knockout
+  crossroads_bonus: integer('crossroads_bonus').default(0).notNull(), // Bonus/penalty points from crossroads choice (-30 or +30)
   avatar: text('avatar'), // Chosen animal emoji avatar
   created_at: timestamp('created_at').defaultNow().notNull(),
 });
