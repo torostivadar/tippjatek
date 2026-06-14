@@ -503,15 +503,17 @@ function FriendsTipsBlock({
             
             <div className="flex items-center gap-2 shrink-0">
               <span className="font-mono text-[11px] font-bold text-ink bg-wash border border-line px-2 py-0.5 rounded-md">
-                {p.predicted_a} - {p.predicted_b} {p.is_tuti && '⭐️'}
+                {p.predicted_a} - {p.predicted_b} {p.is_tuti && '⚡'}
               </span>
               {hasPoints && (
                 <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider ${
                   p.points_earned > 0 
                     ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' 
+                    : p.points_earned < 0
+                    ? 'bg-red-50 text-red-700 border border-red-200'
                     : 'bg-slate-100 border border-line text-mid'
                 }`}>
-                  {p.points_earned > 0 ? `+${p.points_earned}p` : '0p'}
+                  {p.points_earned > 0 ? `+${p.points_earned}p` : `${p.points_earned}p`}
                 </span>
               )}
             </div>
