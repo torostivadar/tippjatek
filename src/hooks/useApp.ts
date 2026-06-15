@@ -68,10 +68,14 @@ export function useApp() {
         .order('start_time', { ascending: true });
       
       const formattedMatches = (matchData || []).map(m => {
+        const formatted = { ...m };
         if (m.start_time && !m.start_time.endsWith('Z')) {
-          return { ...m, start_time: `${m.start_time}Z` };
+          formatted.start_time = `${m.start_time}Z`;
         }
-        return m;
+        if (m.last_sync_attempt && !m.last_sync_attempt.endsWith('Z')) {
+          formatted.last_sync_attempt = `${m.last_sync_attempt}Z`;
+        }
+        return formatted;
       });
       setMatches(formattedMatches);
 
@@ -107,15 +111,52 @@ export function useApp() {
       setTeams(teamData || []);
 
       // Trigger background API sync (on-demand / lazy sync) with authentication
-      supabase.auth.getSession().then(({ data: { session } }) => {
-        if (session?.access_token) {
-          fetch(`/api/cron/update-live?t=${Date.now()}`, {
-            headers: {
-              Authorization: `Bearer ${session.access_token}`
-            }
-          }).catch(err => console.error('On-demand sync error:', err));
+      // only if there is at least one match that started 120+ minutes ago (or 160+ mins for LIVE) and is not finished.
+      const now = Date.now();
+      const oneMinuteAgo = now - 1 * 60 * 1000;
+
+      const matchesToSync = formattedMatches.filter(m => {
+        if (m.status === 'FINISHED') return false;
+
+        const startMs = new Date(m.start_time).getTime();
+        const minutesSinceStart = (now - startMs) / (60 * 1000);
+
+        // 120 percnél hamarabb semmiképp sem indítunk hívást
+        if (minutesSinceStart < 120) return false;
+
+        // Ha a DB-ben a meccs már LIVE-ra váltott (mert a 120. percben azt láttuk, hogy hosszabbítás van),
+        // akkor várunk a 160. percig, mielőtt újra próbálkoznánk (hogy a hosszabbítás/büntetők lemenjenek)
+        if (m.status === 'LIVE' && minutesSinceStart < 160) return false;
+
+        // 1 perces throttling védelem a kliens oldalon is
+        if (m.last_sync_attempt) {
+          const lastAttemptMs = new Date(m.last_sync_attempt).getTime();
+          if (lastAttemptMs > oneMinuteAgo) return false;
         }
+
+        return true;
       });
+
+      if (matchesToSync.length > 0) {
+        console.log(`[Sync] Találtam ${matchesToSync.length} frissítendő meccset (célfotó ablak). Háttérszinkronizálás indítása...`);
+        supabase.auth.getSession().then(({ data: { session } }) => {
+          if (session?.access_token) {
+            fetch(`/api/cron/update-live?t=${Date.now()}`, {
+              headers: {
+                Authorization: `Bearer ${session.access_token}`
+              }
+            })
+            .then(res => {
+              if (!res.ok) console.warn(`[Sync] API válasz hiba: ${res.status}`);
+            })
+            .catch(err => console.error('On-demand sync error:', err));
+          } else {
+            console.warn('[Sync] Nincs érvényes session token, szinkronizálás kihagyva.');
+          }
+        });
+      } else {
+        console.log('[Sync] Nincs a 120 (vagy LIVE meccsnél 160) perces ablakban lévő, frissítendő meccs. API hívás kihagyva.');
+      }
 
     } catch (err) {
       console.error('Error fetching data:', err);
