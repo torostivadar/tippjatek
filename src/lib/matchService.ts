@@ -62,6 +62,7 @@ const ENGLISH_TO_HUNGARIAN: Record<string, string> = {
   'Uruguay': 'Uruguay',
   'Uzbekistan': 'Üzbegisztán',
   'Cape Verde': 'Zöld-foki Köztársaság',
+  'Cape Verde Islands': 'Zöld-foki Köztársaság',
   'Cabo Verde': 'Zöld-foki Köztársaság'
 };
 
