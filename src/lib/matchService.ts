@@ -2,6 +2,7 @@ import { db } from '@/src/db';
 import { matches } from '@/src/db/schema';
 import { eq, not } from 'drizzle-orm';
 import { scoreMatch } from './scoring';
+import { getUtcTimestamp } from './utils';
 
 // Translation map from football-data.org English names to our Hungarian team names
 const ENGLISH_TO_HUNGARIAN: Record<string, string> = {
@@ -140,7 +141,7 @@ export async function syncMatchesAndScore(targetMatchIds?: string[]) {
       } else {
         // Knockout Stage: Match by start time (match start times are unique per slot)
         const apiTime = new Date(api.utcDate).getTime();
-        const dbTime = new Date(dbMatch.start_time).getTime();
+        const dbTime = getUtcTimestamp(dbMatch.start_time);
         // Allow a 1-hour window for timezone safety, but they should match exactly
         return Math.abs(apiTime - dbTime) < 60 * 60 * 1000;
       }

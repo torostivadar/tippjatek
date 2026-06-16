@@ -4,6 +4,7 @@ import { matches } from '@/src/db/schema';
 import { and, eq, not, inArray } from 'drizzle-orm';
 import { syncMatchesAndScore } from '@/src/lib/matchService';
 import { supabase } from '@/src/lib/supabase';
+import { getUtcTimestamp } from '@/src/lib/utils';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -41,7 +42,7 @@ export async function GET(req: NextRequest) {
     
     // Filter matches that meet the strict target window (célfotó) criteria
     const matchesToSync = unfinishedMatches.filter(match => {
-      const startMs = new Date(match.start_time).getTime();
+      const startMs = getUtcTimestamp(match.start_time);
       const minutesSinceStart = (now.getTime() - startMs) / (60 * 1000);
 
       // Rule 1: Must be at least 120 minutes since kickoff (regular play + halftime + cooling breaks + extra time buffer)
