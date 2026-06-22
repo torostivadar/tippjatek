@@ -158,34 +158,6 @@ function DayHeader({ label, count }: DayHeaderProps) {
   );
 }
 
-function Legend() {
-  const items = [
-    ['#6D28D9', 'Telitalálat (+50/100)'],
-    ['#15803D', 'Kimenetel (+30/60)'],
-    ['#DC2626', 'Nem talált (0)'],
-    ['#B45309', 'TUTI bejött (+100/20)'],
-    ['#111827', 'TUTI bukta (-30)'],
-    ['#64748B', 'Nem tippelt / Mentett'],
-  ];
-  return (
-    <div className="rounded-xl border border-line bg-card px-3.5 py-3 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
-      <div className="text-[9px] font-bold uppercase tracking-[0.16em] text-faint mb-2.5">Jelmagyarázat</div>
-      <div className="grid grid-cols-2 gap-x-3 gap-y-2">
-        {items.map(([c, l]) => (
-          <div key={l} className="flex items-center gap-1.5 min-w-0">
-            <span className="w-2 h-2 rounded-full shrink-0" style={{ background: c }} />
-            <span className="text-[10.5px] text-mid truncate">{l}</span>
-          </div>
-        ))}
-        <div className="flex items-center gap-1.5 min-w-0">
-          <Icon name="star" size={11} fill={FAV_COLOR} strokeWidth={0} className="shrink-0" />
-          <span className="text-[10.5px] text-mid truncate">Kedvenc · Dupla pont</span>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 interface MatchListProps {
   matches: Match[];
   predictions: Prediction[];
@@ -196,29 +168,50 @@ interface MatchListProps {
 
 export function MatchList({ matches, predictions, selectedId, onSelect, favoriteTeam }: MatchListProps) {
   const days = groupByDay(matches);
+  const scrollRef = React.useRef<HTMLDivElement | null>(null);
+
+  // Find the first match that is not finished
+  const activeIndex = matches.findIndex(m => m.status !== 'FINISHED');
+  // Target match is 3 matches before the active match to keep 3 finished matches visible above
+  const scrollIndex = activeIndex !== -1 ? Math.max(0, activeIndex - 3) : 0;
+  const scrollTargetId = matches[scrollIndex]?.id;
+
+  React.useEffect(() => {
+    if (scrollRef.current) {
+      const timer = setTimeout(() => {
+        scrollRef.current?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start'
+        });
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [scrollTargetId]);
   
   return (
     <div className="flex flex-col gap-3">
 
-      <div className="flex flex-col gap-3 md:max-h-[calc(100vh-320px)] md:overflow-y-auto md:pr-1.5 nice-scroll">
+      <div className="flex flex-col gap-3 md:max-h-[calc(100vh-200px)] md:overflow-y-auto md:pr-1.5 nice-scroll">
         {days.map((day) => (
           <div key={day.key} className="flex flex-col gap-1.5">
             <DayHeader label={day.label} count={`${day.items.length} meccs`} />
-            {day.items.map((m) => (
-              <MatchRow
-                key={m.id}
-                match={m}
-                pred={predictions.find((p) => p.match_id === m.id)}
-                selected={m.id === selectedId}
-                onClick={() => onSelect(m.id)}
-                favoriteTeam={favoriteTeam}
-              />
-            ))}
+            {day.items.map((m) => {
+              const isScrollTarget = m.id === scrollTargetId;
+              return (
+                <div key={m.id} ref={isScrollTarget ? scrollRef : undefined}>
+                  <MatchRow
+                    match={m}
+                    pred={predictions.find((p) => p.match_id === m.id)}
+                    selected={m.id === selectedId}
+                    onClick={() => onSelect(m.id)}
+                    favoriteTeam={favoriteTeam}
+                  />
+                </div>
+              );
+            })}
           </div>
         ))}
       </div>
-
-      <Legend />
     </div>
   );
 }

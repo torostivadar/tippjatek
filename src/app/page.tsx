@@ -50,6 +50,18 @@ export default function Home() {
   const [favoriteModalOpen, setFavoriteModalOpen] = useState(false);
   const [selectedTeamId, setSelectedTeamId] = useState<string | null>(null);
   const [mobileDetailOpen, setMobileDetailOpen] = useState(false);
+  const [highlightedGroup, setHighlightedGroup] = useState<string | null>(null);
+
+  const handleSelectGroup = (groupLetterOrStage: string) => {
+    if (groupLetterOrStage && groupLetterOrStage.length === 1 && groupLetterOrStage >= 'A' && groupLetterOrStage <= 'L') {
+      setHighlightedGroup(groupLetterOrStage);
+      setActiveTab('groups');
+    } else {
+      setActiveTab('groups');
+    }
+    setMobileDetailOpen(false);
+    setSelectedTeamId(null);
+  };
 
   // Set default selected match once matches load
   useEffect(() => {
@@ -236,6 +248,7 @@ export default function Home() {
                   favoriteTeam={currentProfile?.favorite_team}
                   teams={teams}
                   onSelectTeam={setSelectedTeamId}
+                  onSelectGroup={handleSelectGroup}
                 />
               ) : (
                 <div className="rounded-3xl border border-line bg-card p-10 text-center text-faint italic shadow-[0_18px_50px_-24px_rgba(16,24,40,0.30)]">
@@ -261,6 +274,8 @@ export default function Home() {
             teams={teams}
             matches={matches}
             onSelectTeam={setSelectedTeamId}
+            highlightedGroup={highlightedGroup}
+            onClearHighlight={() => setHighlightedGroup(null)}
           />
         )}
 
@@ -307,6 +322,7 @@ export default function Home() {
                 onSelectTeam={(teamId) => {
                   setSelectedTeamId(teamId);
                 }}
+                onSelectGroup={handleSelectGroup}
               />
             </div>
           </div>
@@ -326,6 +342,7 @@ export default function Home() {
             setActiveTab('matches');
             setMobileDetailOpen(true);
           }}
+          onSelectGroup={handleSelectGroup}
         />
       )}
     </div>

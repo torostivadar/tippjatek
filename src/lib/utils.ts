@@ -134,26 +134,19 @@ export function getGroupTheme(groupName: string): { label: string; bg: string; f
  * and return its UTC timestamp, avoiding local server timezone shifts.
  */
 export function getUtcTimestamp(dateVal: Date | string | number): number {
-  const d = new Date(dateVal);
-  if (isNaN(d.getTime())) return 0;
-  
-  // If it's a string that already has timezone info or is a number, we can parse it normally
-  if (typeof dateVal === 'string' && (dateVal.endsWith('Z') || dateVal.includes('+') || dateVal.includes('GMT'))) {
-    return d.getTime();
+  if (dateVal instanceof Date) {
+    return dateVal.getTime();
   }
   if (typeof dateVal === 'number') {
-    return d.getTime();
+    return dateVal;
   }
-
-  // Otherwise, extract local parts and construct a UTC timestamp
-  return Date.UTC(
-    d.getFullYear(),
-    d.getMonth(),
-    d.getDate(),
-    d.getHours(),
-    d.getMinutes(),
-    d.getSeconds(),
-    d.getMilliseconds()
-  );
+  if (typeof dateVal === 'string') {
+    if (dateVal.endsWith('Z') || dateVal.includes('+') || dateVal.includes('GMT')) {
+      return new Date(dateVal).getTime();
+    }
+    const utcStr = dateVal.includes(' ') ? dateVal.replace(' ', 'T') + 'Z' : dateVal + 'Z';
+    return new Date(utcStr).getTime();
+  }
+  return new Date(dateVal).getTime();
 }
 

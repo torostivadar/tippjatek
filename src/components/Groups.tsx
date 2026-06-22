@@ -6,9 +6,28 @@ interface GroupsProps {
   teams: Team[];
   matches: Match[];
   onSelectTeam: (teamId: string) => void;
+  highlightedGroup?: string | null;
+  onClearHighlight?: () => void;
 }
 
-export function Groups({ teams, matches, onSelectTeam }: GroupsProps) {
+export function Groups({ teams, matches, onSelectTeam, highlightedGroup, onClearHighlight }: GroupsProps) {
+  React.useEffect(() => {
+    if (highlightedGroup) {
+      const element = document.getElementById(`group-${highlightedGroup}`);
+      if (element) {
+        const timer = setTimeout(() => {
+          element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          element.classList.add('ring-4', 'ring-indigo-500/50', 'border-indigo-500', 'scale-[1.02]');
+          
+          setTimeout(() => {
+            element.classList.remove('ring-4', 'ring-indigo-500/50', 'border-indigo-500', 'scale-[1.02]');
+            onClearHighlight?.();
+          }, 2000);
+        }, 100);
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [highlightedGroup]);
   // 1. Calculate Standings
   const standings: Record<string, {
     played: number;
@@ -140,6 +159,7 @@ export function Groups({ teams, matches, onSelectTeam }: GroupsProps) {
             return (
               <div 
                 key={letter}
+                id={`group-${letter}`}
                 className="bg-card rounded-2xl border border-line shadow-[0_2px_8px_-2px_rgba(16,24,40,0.04)] overflow-hidden transition-all duration-300 hover:shadow-[0_12px_24px_-10px_rgba(16,24,40,0.08)] hover:border-line2"
               >
                 {/* Group Header */}

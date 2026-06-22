@@ -15,6 +15,17 @@ const client =
     idle_timeout: 5,
     connect_timeout: 10,
     prepare: false, // Required for Supabase pgBouncer connection pooler
+    types: {
+      timestamp: {
+        to: 1114,
+        from: [1114],
+        serialize: (x: any) => x,
+        parse: (x: string) => {
+          const utcStr = x.includes(' ') ? x.replace(' ', 'T') + 'Z' : x + 'Z';
+          return new Date(utcStr);
+        }
+      }
+    }
   });
 
 if (process.env.NODE_ENV !== 'production') {

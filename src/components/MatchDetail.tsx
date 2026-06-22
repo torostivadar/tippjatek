@@ -728,9 +728,10 @@ interface MatchDetailProps {
   favoriteTeam?: string | null;
   teams?: Team[];
   onSelectTeam?: (teamId: string) => void;
+  onSelectGroup?: (groupLetter: string) => void;
 }
 
-export function MatchDetail({ match, prediction, onSave, favoriteTeam, teams = [], onSelectTeam }: MatchDetailProps) {
+export function MatchDetail({ match, prediction, onSave, favoriteTeam, teams = [], onSelectTeam, onSelectGroup }: MatchDetailProps) {
   const [a, setA] = useState(prediction?.predicted_a ?? 0);
   const [b, setB] = useState(prediction?.predicted_b ?? 0);
   const [isTuti, setIsTuti] = useState(prediction?.is_tuti ?? false);
@@ -892,12 +893,13 @@ export function MatchDetail({ match, prediction, onSave, favoriteTeam, teams = [
           <Icon name="calendar" size={14} style={{ color: '#7C3AED' }} className="shrink-0" />
           <span className="font-mono text-[12px] font-medium text-ink tabular-nums">{fmtLong(match.start_time)}</span>
           {theme.label && (
-            <span 
-              className="text-[9px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider border"
+            <button 
+              onClick={() => onSelectGroup?.(match.group)}
+              className="text-[9px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider border cursor-pointer hover:bg-accent/15 active:scale-95 transition-all text-left"
               style={{ color: '#7C3AED', borderColor: '#7C3AED55', background: '#7C3AED14' }}
             >
               {theme.label}
-            </span>
+            </button>
           )}
           {isFav && (
             <span className="inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider" style={{ color: '#EA580C' }}>

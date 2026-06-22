@@ -137,9 +137,10 @@ interface TeamProfileProps {
   favoriteTeam?: string | null;
   onClose: () => void;
   onSelectMatch?: (matchId: string) => void;
+  onSelectGroup?: (groupLetter: string) => void;
 }
 
-export function TeamProfile({ team, matches, predictions, favoriteTeam, onClose, onSelectMatch }: TeamProfileProps) {
+export function TeamProfile({ team, matches, predictions, favoriteTeam, onClose, onSelectMatch, onSelectGroup }: TeamProfileProps) {
   const teamMatches = matches
     .filter(m => m.team_a === team.name || m.team_b === team.name)
     .sort((a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime());
@@ -186,9 +187,12 @@ export function TeamProfile({ team, matches, predictions, favoriteTeam, onClose,
                   {team.name}
                 </h2>
                 {team.group_letter && (
-                  <span className="bg-indigo-50 border border-indigo-100 text-indigo-700 text-[11px] font-extrabold uppercase px-2.5 py-0.5 rounded-full tracking-wider">
+                  <button 
+                    onClick={() => onSelectGroup?.(team.group_letter)}
+                    className="bg-indigo-50 hover:bg-indigo-100 active:scale-95 transition-all border border-indigo-100 text-indigo-700 text-[11px] font-extrabold uppercase px-2.5 py-0.5 rounded-full tracking-wider cursor-pointer"
+                  >
                     {team.group_letter} Csoport
-                  </span>
+                  </button>
                 )}
               </div>
               <p className="text-mid text-xs font-semibold uppercase tracking-[0.12em] mt-1.5 flex items-center gap-1.5">
