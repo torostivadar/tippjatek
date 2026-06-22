@@ -188,7 +188,11 @@ export function TeamProfile({ team, matches, predictions, favoriteTeam, onClose,
                 </h2>
                 {team.group_letter && (
                   <button 
-                    onClick={() => onSelectGroup?.(team.group_letter)}
+                    type="button"
+                    onClick={() => {
+                      console.log('TeamProfile: group badge clicked:', team.group_letter);
+                      onSelectGroup?.(team.group_letter);
+                    }}
                     className="bg-indigo-50 hover:bg-indigo-100 active:scale-95 transition-all border border-indigo-100 text-indigo-700 text-[11px] font-extrabold uppercase px-2.5 py-0.5 rounded-full tracking-wider cursor-pointer"
                   >
                     {team.group_letter} Csoport

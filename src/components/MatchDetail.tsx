@@ -894,7 +894,11 @@ export function MatchDetail({ match, prediction, onSave, favoriteTeam, teams = [
           <span className="font-mono text-[12px] font-medium text-ink tabular-nums">{fmtLong(match.start_time)}</span>
           {theme.label && (
             <button 
-              onClick={() => onSelectGroup?.(match.group)}
+              type="button"
+              onClick={() => {
+                console.log('MatchDetail: group badge clicked:', match.group);
+                onSelectGroup?.(match.group);
+              }}
               className="text-[9px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider border cursor-pointer hover:bg-accent/15 active:scale-95 transition-all text-left"
               style={{ color: '#7C3AED', borderColor: '#7C3AED55', background: '#7C3AED14' }}
             >

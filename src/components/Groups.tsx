@@ -23,7 +23,7 @@ export function Groups({ teams, matches, onSelectTeam, highlightedGroup, onClear
             element.classList.remove('ring-4', 'ring-indigo-500/50', 'border-indigo-500', 'scale-[1.02]');
             onClearHighlight?.();
           }, 2000);
-        }, 100);
+        }, 350);
         return () => clearTimeout(timer);
       }
     }
