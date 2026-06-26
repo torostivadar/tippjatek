@@ -1,6 +1,6 @@
 import { db } from '@/src/db';
-import { matches } from '@/src/db/schema';
-import { eq, not } from 'drizzle-orm';
+import { matches, predictions } from '@/src/db/schema';
+import { eq, not, or, inArray, isNull } from 'drizzle-orm';
 import { scoreMatch } from './scoring';
 import { getUtcTimestamp } from './utils';
 
@@ -106,11 +106,25 @@ export async function syncMatchesAndScore(targetMatchIds?: string[]) {
   const apiFixtures = await fetchApiFixtures();
   console.log(`Fetched ${apiFixtures.length} fixtures from football-data.org.`);
 
-  // Get all matches from our DB that are not finished
+  // Find all match IDs that still have at least one prediction with null points
+  const unscoredPredictions = await db
+    .select({ match_id: predictions.match_id })
+    .from(predictions)
+    .where(isNull(predictions.points_earned));
+  const unscoredMatchIds = Array.from(new Set(unscoredPredictions.map(p => p.match_id)));
+
+  // Get matches that are either not finished or are in the unscoredMatchIds list (self-healing)
   const dbMatches = await db
     .select()
     .from(matches)
-    .where(not(eq(matches.status, 'FINISHED')));
+    .where(
+      unscoredMatchIds.length > 0
+        ? or(
+            not(eq(matches.status, 'FINISHED')),
+            inArray(matches.id, unscoredMatchIds)
+          )
+        : not(eq(matches.status, 'FINISHED'))
+    );
 
   const matchesToProcess = targetMatchIds
     ? dbMatches.filter(m => targetMatchIds.includes(m.id))
