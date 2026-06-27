@@ -178,28 +178,7 @@ export function Groups({ teams, matches, onSelectTeam, highlightedGroup, onClear
   };
 
   return (
-    <div className="space-y-8">
-      {/* Továbbjutási jelmagyarázat */}
-      <div className="bg-card rounded-2xl border border-line p-4 shadow-[0_1px_2px_rgba(16,24,40,0.04)] flex flex-wrap gap-x-6 gap-y-2.5 items-center text-xs font-semibold text-mid">
-        <span className="text-faint uppercase tracking-wider text-[10px] font-bold mr-1">Csoportkör továbbjutási helyzet:</span>
-        <div className="flex items-center gap-2">
-          <span className="w-5 h-5 rounded bg-emerald-100 border border-emerald-200 flex items-center justify-center text-[9.5px] font-bold text-emerald-800 font-mono">1</span>
-          <span>Csoport 1-2. (Automatikus továbbjutó)</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="w-5 h-5 rounded bg-teal-50 border border-teal-200 flex items-center justify-center text-[9.5px] font-bold text-teal-700 font-mono">3</span>
-          <span>Legjobb 3. (Továbbjutó helyen)</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="w-5 h-5 rounded bg-slate-100 border border-slate-200 flex items-center justify-center text-[9.5px] font-bold text-slate-600 font-mono">3</span>
-          <span>Gyengébb 3. (Jelenleg kieső)</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="w-5 h-5 rounded bg-rose-50 border border-rose-200 flex items-center justify-center text-[9.5px] font-bold text-rose-700 font-mono">4</span>
-          <span>Csoport 4. (Biztos kieső)</span>
-        </div>
-      </div>
-
+    <div className="space-y-12">
       {/* 1. Group Stage Grid */}
       <div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
@@ -236,24 +215,7 @@ export function Groups({ teams, matches, onSelectTeam, highlightedGroup, onClear
                   {groupTeams.map((team, idx) => {
                     const stats = standings[team.name] || { played: 0, wins: 0, draws: 0, losses: 0, gf: 0, ga: 0, gd: 0, points: 0 };
                     
-                    let badgeClass = 'bg-slate-100 text-slate-600 border border-slate-200';
-                    let tooltipText = 'Kieső hely';
-
-                    if (idx === 0 || idx === 1) {
-                      badgeClass = 'bg-emerald-100 text-emerald-800 border border-emerald-200';
-                      tooltipText = 'Továbbjutó hely (Csoport 1-2.)';
-                    } else if (idx === 2) {
-                      if (advancingThirdTeamIds.has(team.id)) {
-                        badgeClass = 'bg-teal-50 text-teal-700 border border-teal-200';
-                        tooltipText = 'Továbbjutó hely (Legjobb 3. helyezettek egyike)';
-                      } else {
-                        badgeClass = 'bg-slate-100 text-slate-600 border border-slate-200';
-                        tooltipText = 'Kieső hely (Nem a legjobb 3. helyezettek egyike)';
-                      }
-                    } else {
-                      badgeClass = 'bg-rose-50 text-rose-700 border border-rose-200/60';
-                      tooltipText = 'Kieső hely (Csoport 4.)';
-                    }
+                    const isAdvancing = (idx === 0 || idx === 1) || (idx === 2 && advancingThirdTeamIds.has(team.id));
 
                     return (
                       <button
@@ -263,12 +225,15 @@ export function Groups({ teams, matches, onSelectTeam, highlightedGroup, onClear
                       >
                         {/* Team Name and flag */}
                         <div className="col-span-7 flex items-center gap-2.5 min-w-0">
-                          <span 
-                            title={tooltipText}
-                            className={`text-[9.5px] font-mono font-bold w-5 h-5 rounded flex items-center justify-center tabular-nums shrink-0 mr-1 select-none ${badgeClass}`}
-                          >
-                            {idx + 1}
-                          </span>
+                          {isAdvancing ? (
+                            <span className="text-[10px] font-mono font-bold w-5 h-5 rounded-md bg-orange-500 text-white border border-orange-500 flex items-center justify-center tabular-nums shrink-0 mr-1 select-none">
+                              {idx + 1}
+                            </span>
+                          ) : (
+                            <span className="text-xs font-mono font-bold text-faint w-5 pl-1.5 tabular-nums shrink-0 mr-1 select-none">
+                              {idx + 1}.
+                            </span>
+                          )}
                           <FlagBadge country={team.name} size={20} />
                           <div className="min-w-0">
                             <div className="text-[13px] font-bold text-ink truncate group-hover:text-accent transition-colors">
