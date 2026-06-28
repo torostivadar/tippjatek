@@ -45,14 +45,14 @@ export function Bracket({ matches, predictions, onSelectMatch }: BracketProps) {
       <div 
         onClick={() => onSelectMatch(match.id)}
         title={fullMatchTitle}
-        className={`bg-card rounded-2xl border p-2.5 cursor-pointer transition-all duration-200 select-none shadow-xs hover:shadow-sm hover:scale-[1.01] flex flex-col justify-between ${borderStyle} ${isCompact ? 'w-[125px] h-[78px]' : 'w-full'} ${className}`}
+        className={`bg-card rounded-2xl border p-2 cursor-pointer transition-all duration-200 select-none shadow-xs hover:shadow-sm hover:scale-[1.01] flex flex-col justify-between ${borderStyle} ${isCompact ? 'w-[115px] h-[78px]' : 'w-full'} ${className}`}
       >
         {/* Match Header */}
-        <div className="flex items-center justify-between text-[8px] font-bold text-faint mb-1.5 uppercase tracking-wider shrink-0">
+        <div className="flex items-center justify-between text-[8px] font-bold text-faint mb-1 uppercase tracking-wider shrink-0">
           <span>#{match.id}</span>
           {isLive ? (
             <span className="text-amber-600 flex items-center gap-0.5 animate-pulse">
-              <span className="w-1 h-1 rounded-full bg-amber-500" /> LIVE
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-500" /> LIVE
             </span>
           ) : isFinished ? (
             <span className="text-emerald-600">FT</span>
@@ -67,7 +67,7 @@ export function Bracket({ matches, predictions, onSelectMatch }: BracketProps) {
         <div className="flex-1 flex flex-col justify-center min-w-0">
           {/* Team A Row */}
           <div className="flex items-center justify-between gap-1 py-0.5 min-w-0">
-            <div className="flex items-center gap-1.5 min-w-0">
+            <div className="flex items-center gap-1 min-w-0">
               <FlagBadge country={match.team_a} size={14} />
               <span className={`text-[10px] font-extrabold truncate ${isFinished && match.score_a !== null && match.score_b !== null && match.score_a < match.score_b ? 'text-faint font-semibold' : 'text-ink'}`}>
                 {teamAName}
@@ -82,7 +82,7 @@ export function Bracket({ matches, predictions, onSelectMatch }: BracketProps) {
 
           {/* Team B Row */}
           <div className="flex items-center justify-between gap-1 py-0.5 min-w-0">
-            <div className="flex items-center gap-1.5 min-w-0">
+            <div className="flex items-center gap-1 min-w-0">
               <FlagBadge country={match.team_b} size={14} />
               <span className={`text-[10px] font-extrabold truncate ${isFinished && match.score_a !== null && match.score_b !== null && match.score_b < match.score_a ? 'text-faint font-semibold' : 'text-ink'}`}>
                 {teamBName}
@@ -120,7 +120,7 @@ export function Bracket({ matches, predictions, onSelectMatch }: BracketProps) {
             </span>
             Kieséses Szakasz Ágrajz
           </h2>
-          <p className="text-[11.5px] text-faint font-medium mt-0.5">Mozgatható ágrajz. Vidd rá a kurzort a teljes nevekért, és kattints a tippeléshez.</p>
+          <p className="text-[11.5px] text-faint font-medium mt-0.5">Vidd rá a kurzort a teljes nevekért. Koppints a tipp leadásához.</p>
         </div>
 
         {/* Tabs for mobile/desktop layout switches */}
@@ -263,19 +263,19 @@ export function Bracket({ matches, predictions, onSelectMatch }: BracketProps) {
 
       {/* 3. FULL BRACKET INTERACTIVE TREE (Shown on desktop OR when 'all' is selected on mobile) */}
       <div className={`overflow-x-auto nice-scroll pb-6 ${mobileRoundTab !== 'all' ? 'hidden lg:block' : 'block'}`}>
-        <div className="flex items-center justify-center p-4 bg-wash/30 rounded-3xl border border-line select-none">
-          {/* Main Tree wrapper container - exactly 720px high for perfect mathematical alignments */}
-          <div className="flex items-center gap-x-0 h-[720px]">
+        <div className="flex items-center justify-start xl:justify-center p-4 bg-wash/30 rounded-3xl border border-line select-none overflow-x-auto">
+          {/* Main Tree wrapper container - exactly 800px high for perfect mathematical alignments */}
+          <div className="flex items-center gap-x-0 h-[800px] min-w-max mx-auto">
             
             {/* COLUMN 1: LEFT ROUND OF 32 */}
-            <div className="h-[720px] flex flex-col justify-between">
+            <div className="h-[800px] flex flex-col justify-between">
               {[
                 { top: '73', bottom: '75' },
                 { top: '74', bottom: '77' },
                 { top: '76', bottom: '78' },
                 { top: '79', bottom: '80' }
               ].map((pair, idx) => (
-                <div key={idx} className="h-[180px] flex flex-col justify-center gap-6">
+                <div key={idx} className="h-[200px] flex flex-col justify-center gap-1.5">
                   {renderMatchCard(pair.top)}
                   {renderMatchCard(pair.bottom)}
                 </div>
@@ -283,152 +283,152 @@ export function Bracket({ matches, predictions, onSelectMatch }: BracketProps) {
             </div>
 
             {/* COLUMN 2: LEFT CONNECTORS 1 */}
-            <div className="h-[720px] flex flex-col justify-between shrink-0">
+            <div className="h-[800px] flex flex-col justify-between shrink-0">
               {[1, 2, 3, 4].map(idx => (
-                <svg key={idx} className="w-6 h-[180px]" style={{ color: strokeColor }} stroke="currentColor" strokeWidth={strokeWidth} strokeOpacity={strokeOpacity} fill="none">
-                  <path d="M 0 39 L 12 39 L 12 141 L 0 141 M 12 90 L 24 90" />
+                <svg key={idx} className="w-4 h-[200px]" style={{ color: strokeColor }} stroke="currentColor" strokeWidth={strokeWidth} strokeOpacity={strokeOpacity} fill="none">
+                  <path d="M 0 59 L 8 59 L 8 141 L 0 141 M 8 100 L 16 100" />
                 </svg>
               ))}
             </div>
 
             {/* COLUMN 3: LEFT ROUND OF 16 */}
-            <div className="h-[720px] flex flex-col justify-between">
+            <div className="h-[800px] flex flex-col justify-between">
               {['90', '89', '91', '92'].map(id => (
-                <div key={id} className="h-[180px] flex items-center">
+                <div key={id} className="h-[200px] flex items-center">
                   {renderMatchCard(id)}
                 </div>
               ))}
             </div>
 
             {/* COLUMN 4: LEFT CONNECTORS 2 */}
-            <div className="h-[720px] flex flex-col justify-between shrink-0">
+            <div className="h-[800px] flex flex-col justify-between shrink-0">
               {[1, 2].map(idx => (
-                <svg key={idx} className="w-6 h-[360px]" style={{ color: strokeColor }} stroke="currentColor" strokeWidth={strokeWidth} strokeOpacity={strokeOpacity} fill="none">
-                  <path d="M 0 90 L 12 90 L 12 270 L 0 270 M 12 180 L 24 180" />
+                <svg key={idx} className="w-4 h-[400px]" style={{ color: strokeColor }} stroke="currentColor" strokeWidth={strokeWidth} strokeOpacity={strokeOpacity} fill="none">
+                  <path d="M 0 100 L 8 100 L 8 300 L 0 300 M 8 200 L 16 200" />
                 </svg>
               ))}
             </div>
 
             {/* COLUMN 5: LEFT QUARTER-FINALS */}
-            <div className="h-[720px] flex flex-col justify-between">
+            <div className="h-[800px] flex flex-col justify-between">
               {['97', '98'].map(id => (
-                <div key={id} className="h-[360px] flex items-center">
+                <div key={id} className="h-[400px] flex items-center">
                   {renderMatchCard(id)}
                 </div>
               ))}
             </div>
 
             {/* COLUMN 6: LEFT CONNECTORS 3 */}
-            <div className="h-[720px] flex items-center shrink-0">
-              <svg className="w-6 h-[720px]" style={{ color: strokeColor }} stroke="currentColor" strokeWidth={strokeWidth} strokeOpacity={strokeOpacity} fill="none">
-                <path d="M 0 180 L 12 180 L 12 540 L 0 540 M 12 360 L 24 360" />
+            <div className="h-[800px] flex items-center shrink-0">
+              <svg className="w-4 h-[800px]" style={{ color: strokeColor }} stroke="currentColor" strokeWidth={strokeWidth} strokeOpacity={strokeOpacity} fill="none">
+                <path d="M 0 200 L 8 200 L 8 600 L 0 600 M 8 400 L 16 400" />
               </svg>
             </div>
 
             {/* COLUMN 7: LEFT SEMI-FINALS */}
-            <div className="h-[720px] flex items-center">
+            <div className="h-[800px] flex items-center">
               {renderMatchCard('101')}
             </div>
 
             {/* COLUMN 8: LEFT CONNECTORS 4 */}
-            <div className="h-[720px] flex items-center shrink-0">
-              <svg className="w-6 h-[78px]" style={{ color: strokeColor }} stroke="currentColor" strokeWidth={strokeWidth} strokeOpacity={strokeOpacity} fill="none">
-                <path d="M 0 39 L 24 39" />
+            <div className="h-[800px] flex items-center shrink-0">
+              <svg className="w-4 h-[78px]" style={{ color: strokeColor }} stroke="currentColor" strokeWidth={strokeWidth} strokeOpacity={strokeOpacity} fill="none">
+                <path d="M 0 39 L 16 39" />
               </svg>
             </div>
 
             {/* COLUMN 9: ABSOLUTE CENTER (FINAL & THIRD PLACE & CHAMPION) */}
-            <div className="h-[720px] relative w-[160px] shrink-0 border-x border-dashed border-line/20">
+            <div className="h-[800px] relative w-[130px] shrink-0 border-x border-dashed border-line/10">
               {/* Winner Cup - mathematically positioned */}
-              <div className="absolute top-[50px] left-1/2 -translate-x-1/2 text-center bg-gradient-to-b from-amber-500/25 to-amber-500/[0.02] border border-amber-500/25 p-3 rounded-2xl shadow-xs w-36">
-                <span className="inline-flex w-8 h-8 rounded-xl bg-amber-500 text-white items-center justify-center shadow-[0_4px_12px_-3px_rgba(245,158,11,0.5)] mb-1.5">
-                  <Icon name="trophy" size={16} strokeWidth={2} />
+              <div className="absolute top-[60px] left-1/2 -translate-x-1/2 text-center bg-gradient-to-b from-amber-500/25 to-amber-500/[0.02] border border-amber-500/25 p-3 rounded-2xl shadow-xs w-28">
+                <span className="inline-flex w-7 h-7 rounded-lg bg-amber-500 text-white items-center justify-center shadow-[0_4px_12px_-3px_rgba(245,158,11,0.5)] mb-1">
+                  <Icon name="trophy" size={14} strokeWidth={2} />
                 </span>
-                <div className="font-display font-black text-[9px] uppercase tracking-wide text-amber-700">Világbajnok</div>
-                <div className="text-[10.5px] font-black text-ink mt-0.5 truncate">
+                <div className="font-display font-black text-[8px] uppercase tracking-wide text-amber-700">Világbajnok</div>
+                <div className="text-[10px] font-black text-ink mt-0.5 truncate">
                   {findMatch('104')?.status === 'FINISHED' 
                     ? (findMatch('104')?.score_a! > findMatch('104')?.score_b! ? findMatch('104')?.team_a : findMatch('104')?.team_b)
                     : 'Nem ismert'}
                 </div>
               </div>
 
-              {/* VB Döntő - mathematically positioned exactly in the center (center matches 360px vertical height) */}
-              <div className="absolute top-[321px] left-1/2 -translate-x-1/2 space-y-1 w-32">
+              {/* VB Döntő - mathematically positioned exactly in the center (middle of card is exactly at 400px) */}
+              <div className="absolute top-[361px] left-1/2 -translate-x-1/2 space-y-1 w-28">
                 <span className="block text-center text-[7.5px] font-extrabold uppercase tracking-widest text-amber-600 bg-amber-500/10 py-0.5 px-2 rounded-full border border-amber-500/20 w-fit mx-auto">Döntő</span>
                 {renderMatchCard('104', 'border-amber-500/30')}
               </div>
 
-              {/* Bronzmeccs - mathematically positioned */}
-              <div className="absolute bottom-[50px] left-1/2 -translate-x-1/2 space-y-1 w-32">
+              {/* Bronzmeccs - positioned exactly in line with the lower Quarterfinals (#98 and #100) at 600px middle height */}
+              <div className="absolute top-[561px] left-1/2 -translate-x-1/2 space-y-1 w-28">
                 <span className="block text-center text-[7.5px] font-extrabold uppercase tracking-widest text-faint">3. helyért</span>
                 {renderMatchCard('103')}
               </div>
             </div>
 
             {/* COLUMN 10: RIGHT CONNECTORS 4 */}
-            <div className="h-[720px] flex items-center shrink-0">
-              <svg className="w-6 h-[78px]" style={{ color: strokeColor }} stroke="currentColor" strokeWidth={strokeWidth} strokeOpacity={strokeOpacity} fill="none">
-                <path d="M 24 39 L 0 39" />
+            <div className="h-[800px] flex items-center shrink-0">
+              <svg className="w-4 h-[78px]" style={{ color: strokeColor }} stroke="currentColor" strokeWidth={strokeWidth} strokeOpacity={strokeOpacity} fill="none">
+                <path d="M 16 39 L 0 39" />
               </svg>
             </div>
 
             {/* COLUMN 11: RIGHT SEMI-FINALS */}
-            <div className="h-[720px] flex items-center">
+            <div className="h-[800px] flex items-center">
               {renderMatchCard('102')}
             </div>
 
             {/* COLUMN 12: RIGHT CONNECTORS 3 */}
-            <div className="h-[720px] flex items-center shrink-0">
-              <svg className="w-6 h-[720px]" style={{ color: strokeColor }} stroke="currentColor" strokeWidth={strokeWidth} strokeOpacity={strokeOpacity} fill="none">
-                <path d="M 24 180 L 12 180 L 12 540 L 24 540 M 12 360 L 0 360" />
+            <div className="h-[800px] flex items-center shrink-0">
+              <svg className="w-4 h-[800px]" style={{ color: strokeColor }} stroke="currentColor" strokeWidth={strokeWidth} strokeOpacity={strokeOpacity} fill="none">
+                <path d="M 16 200 L 8 200 L 8 600 L 16 600 M 8 400 L 0 400" />
               </svg>
             </div>
 
             {/* COLUMN 13: RIGHT QUARTER-FINALS */}
-            <div className="h-[720px] flex flex-col justify-between">
+            <div className="h-[800px] flex flex-col justify-between">
               {['99', '100'].map(id => (
-                <div key={id} className="h-[360px] flex items-center">
+                <div key={id} className="h-[400px] flex items-center">
                   {renderMatchCard(id)}
                 </div>
               ))}
             </div>
 
             {/* COLUMN 14: RIGHT CONNECTORS 2 */}
-            <div className="h-[720px] flex flex-col justify-between shrink-0">
+            <div className="h-[800px] flex flex-col justify-between shrink-0">
               {[1, 2].map(idx => (
-                <svg key={idx} className="w-6 h-[360px]" style={{ color: strokeColor }} stroke="currentColor" strokeWidth={strokeWidth} strokeOpacity={strokeOpacity} fill="none">
-                  <path d="M 24 90 L 12 90 L 12 270 L 24 270 M 12 180 L 0 180" />
+                <svg key={idx} className="w-4 h-[400px]" style={{ color: strokeColor }} stroke="currentColor" strokeWidth={strokeWidth} strokeOpacity={strokeOpacity} fill="none">
+                  <path d="M 16 100 L 8 100 L 8 300 L 16 300 M 8 200 L 0 200" />
                 </svg>
               ))}
             </div>
 
             {/* COLUMN 15: RIGHT ROUND OF 16 */}
-            <div className="h-[720px] flex flex-col justify-between">
+            <div className="h-[800px] flex flex-col justify-between">
               {['94', '93', '95', '96'].map(id => (
-                <div key={id} className="h-[180px] flex items-center">
+                <div key={id} className="h-[200px] flex items-center">
                   {renderMatchCard(id)}
                 </div>
               ))}
             </div>
 
             {/* COLUMN 16: RIGHT CONNECTORS 1 */}
-            <div className="h-[720px] flex flex-col justify-between shrink-0">
+            <div className="h-[800px] flex flex-col justify-between shrink-0">
               {[1, 2, 3, 4].map(idx => (
-                <svg key={idx} className="w-6 h-[180px]" style={{ color: strokeColor }} stroke="currentColor" strokeWidth={strokeWidth} strokeOpacity={strokeOpacity} fill="none">
-                  <path d="M 24 39 L 12 39 L 12 141 L 24 141 M 12 90 L 0 90" />
+                <svg key={idx} className="w-4 h-[200px]" style={{ color: strokeColor }} stroke="currentColor" strokeWidth={strokeWidth} strokeOpacity={strokeOpacity} fill="none">
+                  <path d="M 16 59 L 8 59 L 8 141 L 16 141 M 8 100 L 0 100" />
                 </svg>
               ))}
             </div>
 
             {/* COLUMN 17: RIGHT ROUND OF 32 */}
-            <div className="h-[720px] flex flex-col justify-between">
+            <div className="h-[800px] flex flex-col justify-between">
               {[
                 { top: '81', bottom: '84' },
                 { top: '82', bottom: '83' },
                 { top: '85', bottom: '86' },
                 { top: '87', bottom: '88' }
               ].map((pair, idx) => (
-                <div key={idx} className="h-[180px] flex flex-col justify-center gap-6">
+                <div key={idx} className="h-[200px] flex flex-col justify-center gap-1.5">
                   {renderMatchCard(pair.top)}
                   {renderMatchCard(pair.bottom)}
                 </div>
