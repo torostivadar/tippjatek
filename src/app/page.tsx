@@ -75,6 +75,11 @@ export default function Home() {
     }
   }, [matches]);
 
+  // Scroll to top when activeTab changes to prevent window scroll preservation issues
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'instant' });
+  }, [activeTab]);
+
   const currentProfile = profiles.find(p => p.id === user?.id);
   const showFavoritePrompt = user && currentProfile && !currentProfile.favorite_team;
   const isFavoriteTeamEliminated = currentProfile && currentProfile.favorite_team && eliminatedTeams.includes(currentProfile.favorite_team);

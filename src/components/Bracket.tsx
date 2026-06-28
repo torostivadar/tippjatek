@@ -11,7 +11,7 @@ interface BracketProps {
 
 export function Bracket({ matches, predictions, onSelectMatch }: BracketProps) {
   // Mobile active tab: r16 (L32->L16), qf (L16->L8), sf (Döntők), all (Teljes)
-  const [mobileRoundTab, setMobileRoundTab] = useState<'r16' | 'qf' | 'sf' | 'all'>('r16');
+  const [mobileRoundTab, setMobileRoundTab] = useState<'r16' | 'qf' | 'sf' | 'all'>('all');
 
   // Helper to find match by ID string
   const findMatch = (id: string) => matches.find(m => m.id === id);
