@@ -251,8 +251,8 @@ export function Bracket({ matches, predictions, onSelectMatch }: BracketProps) {
 
                 {/* Right Column: Final & Third place */}
                 <div className="flex-1 space-y-3">
-                  <span className="block text-[8px] font-bold text-yellow-600 uppercase text-center">Döntő</span>
-                  {renderMatchCard('104', 'w-full border-yellow-500/30 bg-yellow-500/[0.02] mb-3', true)}
+                  <span className="block text-[8px] font-bold text-yellow-500 uppercase text-center">Döntő</span>
+                  {renderMatchCard('104', 'w-full border-yellow-400/35 bg-yellow-300/[0.03] mb-3', true)}
 
                   <span className="block text-[8px] font-bold text-amber-800 uppercase text-center">Bronzmérkőzés</span>
                   {renderMatchCard('103', 'w-full border-amber-800/30 bg-amber-800/[0.02]', true)}
@@ -342,11 +342,11 @@ export function Bracket({ matches, predictions, onSelectMatch }: BracketProps) {
             {/* COLUMN 9: ABSOLUTE CENTER (FINAL & THIRD PLACE & CHAMPION) */}
             <div className="h-[800px] relative w-[130px] shrink-0 border-x border-dashed border-line/10">
               {/* Winner Cup - mathematically positioned, Gold themed */}
-              <div className="absolute top-[60px] left-1/2 -translate-x-1/2 text-center bg-gradient-to-b from-yellow-500/20 to-yellow-500/[0.02] border border-yellow-500/30 p-3 rounded-2xl shadow-xs w-28">
-                <span className="inline-flex w-7 h-7 rounded-lg bg-gradient-to-tr from-yellow-500 to-amber-400 text-white items-center justify-center shadow-[0_4px_12px_-3px_rgba(234,179,8,0.5)] mb-1">
+              <div className="absolute top-[60px] left-1/2 -translate-x-1/2 text-center bg-gradient-to-b from-yellow-300/20 to-yellow-400/[0.02] border border-yellow-400/30 p-3 rounded-2xl shadow-xs w-28">
+                <span className="inline-flex w-7 h-7 rounded-lg bg-gradient-to-tr from-yellow-400 to-yellow-300 text-white items-center justify-center shadow-[0_4px_12px_-3px_rgba(234,179,8,0.4)] mb-1">
                   <Icon name="trophy" size={14} strokeWidth={2} />
                 </span>
-                <div className="font-display font-black text-[8px] uppercase tracking-wide text-yellow-600">Világbajnok</div>
+                <div className="font-display font-black text-[8px] uppercase tracking-wide text-yellow-500">Világbajnok</div>
                 <div className="text-[10px] font-black text-ink mt-0.5 truncate">
                   {findMatch('104')?.status === 'FINISHED' 
                     ? (findMatch('104')?.score_a! > findMatch('104')?.score_b! ? findMatch('104')?.team_a : findMatch('104')?.team_b)
@@ -356,8 +356,8 @@ export function Bracket({ matches, predictions, onSelectMatch }: BracketProps) {
 
               {/* VB Döntő - absolute-floating labels so the card top starts exactly at 361px (middle 400px), Gold themed */}
               <div className="absolute top-[361px] left-1/2 -translate-x-1/2 w-28">
-                <span className="absolute -top-[18px] left-0 right-0 block text-center text-[7.5px] font-extrabold uppercase tracking-widest text-yellow-600 bg-yellow-500/10 py-0.5 px-2 rounded-full border border-yellow-500/20 w-fit mx-auto select-none pointer-events-none">Döntő</span>
-                {renderMatchCard('104', 'border-yellow-500/30 bg-yellow-500/[0.01]')}
+                <span className="absolute -top-[18px] left-0 right-0 block text-center text-[7.5px] font-extrabold uppercase tracking-widest text-yellow-500 bg-yellow-400/10 py-0.5 px-2 rounded-full border border-yellow-300/20 w-fit mx-auto select-none pointer-events-none">Döntő</span>
+                {renderMatchCard('104', 'border-yellow-400/30 bg-yellow-300/[0.01]')}
               </div>
 
               {/* Bronzmeccs - absolute-floating labels so the card top starts exactly at 561px (middle 600px), aligned with #98 and #100, Bronze themed */}
