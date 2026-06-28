@@ -45,14 +45,14 @@ export function Bracket({ matches, predictions, onSelectMatch }: BracketProps) {
       <div 
         onClick={() => onSelectMatch(match.id)}
         title={fullMatchTitle}
-        className={`bg-card rounded-2xl border p-2 cursor-pointer transition-all duration-200 select-none shadow-xs hover:shadow-sm hover:scale-[1.01] flex flex-col justify-between ${borderStyle} ${isCompact ? 'w-[115px] h-[78px]' : 'w-full'} ${className}`}
+        className={`bg-card rounded-2xl border p-2.5 cursor-pointer transition-all duration-200 select-none shadow-xs hover:shadow-sm hover:scale-[1.01] flex flex-col justify-between ${borderStyle} ${isCompact ? 'w-[115px] h-[78px]' : 'w-full'} ${className}`}
       >
         {/* Match Header */}
-        <div className="flex items-center justify-between text-[8px] font-bold text-faint mb-1 uppercase tracking-wider shrink-0">
+        <div className="flex items-center justify-between text-[8px] font-bold text-faint mb-1.5 uppercase tracking-wider shrink-0">
           <span>#{match.id}</span>
           {isLive ? (
             <span className="text-amber-600 flex items-center gap-0.5 animate-pulse">
-              <span className="w-1.5 h-1.5 rounded-full bg-amber-500" /> LIVE
+              <span className="w-1 h-1 rounded-full bg-amber-500" /> LIVE
             </span>
           ) : isFinished ? (
             <span className="text-emerald-600">FT</span>
@@ -111,8 +111,8 @@ export function Bracket({ matches, predictions, onSelectMatch }: BracketProps) {
 
   return (
     <div className="space-y-6">
-      {/* 1. Header and Mobile Tabs Selector */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-card rounded-2xl border border-line p-4 shadow-xs">
+      {/* 1. Header and Mobile Tabs Selector - Hidden on Desktop (lg:hidden) */}
+      <div className="lg:hidden flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-card rounded-2xl border border-line p-4 shadow-xs">
         <div>
           <h2 className="text-base font-bold text-ink font-display flex items-center gap-2">
             <span className="w-7 h-7 rounded-lg bg-accent/10 flex items-center justify-center border border-accent/20">
@@ -120,10 +120,10 @@ export function Bracket({ matches, predictions, onSelectMatch }: BracketProps) {
             </span>
             Kieséses Szakasz Ágrajz
           </h2>
-          <p className="text-[11.5px] text-faint font-medium mt-0.5">Vidd rá a kurzort a teljes nevekért. Koppints a tipp leadásához.</p>
+          <p className="text-[11.5px] text-faint font-medium mt-0.5">Koppints a tipp leadásához.</p>
         </div>
 
-        {/* Tabs for mobile/desktop layout switches */}
+        {/* Tabs for mobile layout switches */}
         <div className="flex flex-wrap gap-1 bg-wash border border-line p-1 rounded-xl shrink-0">
           {[
             { id: 'r16' as const, label: 'L32 ➔ L16' },
@@ -330,10 +330,10 @@ export function Bracket({ matches, predictions, onSelectMatch }: BracketProps) {
               {renderMatchCard('101')}
             </div>
 
-            {/* COLUMN 8: LEFT CONNECTORS 4 */}
+            {/* COLUMN 8: LEFT CONNECTORS 4 (SF to Final & branching to 3rd place) */}
             <div className="h-[800px] flex items-center shrink-0">
-              <svg className="w-4 h-[78px]" style={{ color: strokeColor }} stroke="currentColor" strokeWidth={strokeWidth} strokeOpacity={strokeOpacity} fill="none">
-                <path d="M 0 39 L 16 39" />
+              <svg className="w-4 h-[800px]" style={{ color: strokeColor }} stroke="currentColor" strokeWidth={strokeWidth} strokeOpacity={strokeOpacity} fill="none">
+                <path d="M 0 400 L 16 400 M 0 400 L 8 400 L 8 600 L 16 600" />
               </svg>
             </div>
 
@@ -352,23 +352,23 @@ export function Bracket({ matches, predictions, onSelectMatch }: BracketProps) {
                 </div>
               </div>
 
-              {/* VB Döntő - mathematically positioned exactly in the center (middle of card is exactly at 400px) */}
-              <div className="absolute top-[361px] left-1/2 -translate-x-1/2 space-y-1 w-28">
-                <span className="block text-center text-[7.5px] font-extrabold uppercase tracking-widest text-amber-600 bg-amber-500/10 py-0.5 px-2 rounded-full border border-amber-500/20 w-fit mx-auto">Döntő</span>
+              {/* VB Döntő - absolute-floating labels so the card top starts exactly at 361px (middle 400px) */}
+              <div className="absolute top-[361px] left-1/2 -translate-x-1/2 w-28">
+                <span className="absolute -top-[18px] left-0 right-0 block text-center text-[7.5px] font-extrabold uppercase tracking-widest text-amber-600 bg-amber-500/10 py-0.5 px-2 rounded-full border border-amber-500/20 w-fit mx-auto select-none pointer-events-none">Döntő</span>
                 {renderMatchCard('104', 'border-amber-500/30')}
               </div>
 
-              {/* Bronzmeccs - positioned exactly in line with the lower Quarterfinals (#98 and #100) at 600px middle height */}
-              <div className="absolute top-[561px] left-1/2 -translate-x-1/2 space-y-1 w-28">
-                <span className="block text-center text-[7.5px] font-extrabold uppercase tracking-widest text-faint">3. helyért</span>
+              {/* Bronzmeccs - absolute-floating labels so the card top starts exactly at 561px (middle 600px), aligned with #98 and #100 */}
+              <div className="absolute top-[561px] left-1/2 -translate-x-1/2 w-28">
+                <span className="absolute -top-[15px] left-0 right-0 block text-center text-[7.5px] font-extrabold uppercase tracking-widest text-faint w-fit mx-auto select-none pointer-events-none">3. helyért</span>
                 {renderMatchCard('103')}
               </div>
             </div>
 
-            {/* COLUMN 10: RIGHT CONNECTORS 4 */}
+            {/* COLUMN 10: RIGHT CONNECTORS 4 (SF to Final & branching to 3rd place) */}
             <div className="h-[800px] flex items-center shrink-0">
-              <svg className="w-4 h-[78px]" style={{ color: strokeColor }} stroke="currentColor" strokeWidth={strokeWidth} strokeOpacity={strokeOpacity} fill="none">
-                <path d="M 16 39 L 0 39" />
+              <svg className="w-4 h-[800px]" style={{ color: strokeColor }} stroke="currentColor" strokeWidth={strokeWidth} strokeOpacity={strokeOpacity} fill="none">
+                <path d="M 16 400 L 0 400 M 16 400 L 8 400 L 8 600 L 0 600" />
               </svg>
             </div>
 

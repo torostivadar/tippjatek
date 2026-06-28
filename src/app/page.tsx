@@ -183,12 +183,14 @@ export default function Home() {
             <h1 className="text-3xl md:text-[40px] font-bold text-ink tracking-tight font-display leading-[1.05]">
               {activeTab === 'matches' ? 'Mérkőzések & elemzések' : 
                activeTab === 'leaderboard' ? 'Tippbajnokság' : 
-               activeTab === 'groups' ? 'Csoportok & Ágrajz' : 'Játékszabály'}
+               activeTab === 'groups' ? 'Csoportok & Ágrajz' : 
+               activeTab === 'bracket' ? 'Ágrajz' : 'Játékszabály'}
             </h1>
             <p className="text-mid text-[13px] mt-2 max-w-xl leading-relaxed">
               {activeTab === 'matches' && 'Válassz meccset a listából, add le a tipped, és mélyülj el az elemzésekben, oddsokban és formamutatókban.'}
               {activeTab === 'leaderboard' && 'A barátok pontszámai, telitalálatai és az aktuális helyezésed egy helyen.'}
               {activeTab === 'groups' && 'A torna csoportbeosztása és a kieséses szakasz ágrajza.'}
+              {activeTab === 'bracket' && 'A torna kieséses szakaszának menetrendje és ágrajza a döntőig.'}
               {activeTab === 'rules' && 'Ismerd meg a pontozási rendszert, a TUTI tippeket, a Fan Factor bónuszt és a kiesési szabályokat.'}
             </p>
           </div>
@@ -298,16 +300,16 @@ export default function Home() {
         )}
       </main>
 
-      {/* Mobile Match Detail Drawer / Bottom Sheet */}
+      {/* Mobile Match Detail Drawer / Bottom Sheet (doubles as center modal on desktop) */}
       {mobileDetailOpen && selectedMatch && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center md:hidden animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center p-0 md:p-4 animate-in fade-in duration-200">
           {/* Backdrop */}
           <div 
             className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" 
             onClick={() => setMobileDetailOpen(false)}
           />
           {/* Sheet Content */}
-          <div className="relative w-full max-h-[85vh] bg-white rounded-t-[28px] border-t border-line overflow-hidden flex flex-col shadow-[0_-10px_30px_rgba(16,24,40,0.12)] z-50 animate-in slide-in-from-bottom duration-300">
+          <div className="relative w-full md:max-w-xl max-h-[85vh] md:max-h-[90vh] bg-white rounded-t-[28px] md:rounded-[28px] border-t md:border border-line overflow-hidden flex flex-col shadow-[0_-10px_30px_rgba(16,24,40,0.12)] md:shadow-[0_20px_60px_-15px_rgba(16,24,40,0.3)] z-50 animate-in slide-in-from-bottom md:zoom-in-95 duration-300">
             {/* Drag Handle Indicator */}
             <div className="flex justify-center py-2.5 shrink-0 bg-wash">
               <div className="w-12 h-1 rounded-full bg-line" />
