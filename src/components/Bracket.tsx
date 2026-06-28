@@ -52,7 +52,7 @@ export function Bracket({ matches, predictions, onSelectMatch }: BracketProps) {
           <span>#{match.id}</span>
           {isLive ? (
             <span className="text-amber-600 flex items-center gap-0.5 animate-pulse">
-              <span className="w-1 h-1 rounded-full bg-amber-500" /> LIVE
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-500" /> LIVE
             </span>
           ) : isFinished ? (
             <span className="text-emerald-600">FT</span>
@@ -330,10 +330,10 @@ export function Bracket({ matches, predictions, onSelectMatch }: BracketProps) {
               {renderMatchCard('101')}
             </div>
 
-            {/* COLUMN 8: LEFT CONNECTORS 4 (SF to Final & branching to 3rd place) */}
+            {/* COLUMN 8: LEFT CONNECTORS 4 (SF to Final & branching to 3rd place, extending 8px into Column 9) */}
             <div className="h-[800px] flex items-center shrink-0">
-              <svg className="w-4 h-[800px]" style={{ color: strokeColor }} stroke="currentColor" strokeWidth={strokeWidth} strokeOpacity={strokeOpacity} fill="none">
-                <path d="M 0 400 L 16 400 M 0 400 L 8 400 L 8 600 L 16 600" />
+              <svg className="w-4 h-[800px] overflow-visible" style={{ color: strokeColor, overflow: 'visible' }} stroke="currentColor" strokeWidth={strokeWidth} strokeOpacity={strokeOpacity} fill="none">
+                <path d="M 0 400 L 24 400 M 0 400 L 8 400 L 8 600 L 24 600" />
               </svg>
             </div>
 
@@ -365,10 +365,10 @@ export function Bracket({ matches, predictions, onSelectMatch }: BracketProps) {
               </div>
             </div>
 
-            {/* COLUMN 10: RIGHT CONNECTORS 4 (SF to Final & branching to 3rd place) */}
+            {/* COLUMN 10: RIGHT CONNECTORS 4 (SF to Final & branching to 3rd place, extending 8px into Column 9) */}
             <div className="h-[800px] flex items-center shrink-0">
-              <svg className="w-4 h-[800px]" style={{ color: strokeColor }} stroke="currentColor" strokeWidth={strokeWidth} strokeOpacity={strokeOpacity} fill="none">
-                <path d="M 16 400 L 0 400 M 16 400 L 8 400 L 8 600 L 0 600" />
+              <svg className="w-4 h-[800px] overflow-visible" style={{ color: strokeColor, overflow: 'visible' }} stroke="currentColor" strokeWidth={strokeWidth} strokeOpacity={strokeOpacity} fill="none">
+                <path d="M 16 400 L -8 400 M 16 400 L 8 400 L 8 600 L -8 600" />
               </svg>
             </div>
 
