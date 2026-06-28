@@ -252,10 +252,10 @@ export function Bracket({ matches, predictions, onSelectMatch }: BracketProps) {
                 {/* Right Column: Final & Third place */}
                 <div className="flex-1 space-y-3">
                   <span className="block text-[8px] font-bold text-yellow-500 uppercase text-center">Döntő</span>
-                  {renderMatchCard('104', 'w-full border-yellow-400/35 bg-yellow-300/[0.03] mb-3', true)}
+                  {renderMatchCard('104', 'w-full border-yellow-400/35 mb-3', true)}
 
                   <span className="block text-[8px] font-bold text-amber-800 uppercase text-center">Bronzmérkőzés</span>
-                  {renderMatchCard('103', 'w-full border-amber-800/30 bg-amber-800/[0.02]', true)}
+                  {renderMatchCard('103', 'w-full border-amber-800/30', true)}
                 </div>
               </div>
             </div>
@@ -357,13 +357,13 @@ export function Bracket({ matches, predictions, onSelectMatch }: BracketProps) {
               {/* VB Döntő - absolute-floating labels so the card top starts exactly at 361px (middle 400px), Gold themed */}
               <div className="absolute top-[361px] left-1/2 -translate-x-1/2 w-28">
                 <span className="absolute -top-[18px] left-0 right-0 block text-center text-[7.5px] font-extrabold uppercase tracking-widest text-yellow-500 bg-yellow-400/10 py-0.5 px-2 rounded-full border border-yellow-300/20 w-fit mx-auto select-none pointer-events-none">Döntő</span>
-                {renderMatchCard('104', 'border-yellow-400/30 bg-yellow-300/[0.01]')}
+                {renderMatchCard('104', 'border-yellow-400/30')}
               </div>
 
               {/* Bronzmeccs - absolute-floating labels so the card top starts exactly at 561px (middle 600px), aligned with #98 and #100, Bronze themed */}
               <div className="absolute top-[561px] left-1/2 -translate-x-1/2 w-28">
                 <span className="absolute -top-[18px] left-0 right-0 block text-center text-[7.5px] font-extrabold uppercase tracking-widest text-amber-800 bg-amber-800/10 py-0.5 px-2 rounded-full border border-amber-800/20 w-fit mx-auto select-none pointer-events-none">3. helyért</span>
-                {renderMatchCard('103', 'border-amber-800/30 bg-amber-800/[0.01]')}
+                {renderMatchCard('103', 'border-amber-800/30')}
               </div>
             </div>
 
