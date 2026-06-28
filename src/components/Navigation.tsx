@@ -90,6 +90,7 @@ export function Navigation({
             <span className="hidden sm:inline">Ranglista</span>
           </button>
 
+          {/* 
           <button
             onClick={() => setActiveTab('groups')}
             className={`px-4 py-2 rounded-xl text-[11px] font-bold uppercase tracking-[0.15em] transition-all duration-200 flex items-center gap-2
@@ -100,6 +101,7 @@ export function Navigation({
             <Icon name="calendar" size={14} strokeWidth={2.4} />
             <span className="hidden sm:inline">Csoportok</span>
           </button>
+          */}
 
           <button
             onClick={() => setActiveTab('bracket')}
@@ -341,7 +343,7 @@ export function Navigation({
               {[
                 { tab: 'matches' as const, label: 'Mérkőzések', icon: 'whistle' },
                 { tab: 'leaderboard' as const, label: 'Ranglista', icon: 'trophy' },
-                { tab: 'groups' as const, label: 'Csoportok', icon: 'calendar' },
+                // { tab: 'groups' as const, label: 'Csoportok', icon: 'calendar' },
                 { tab: 'bracket' as const, label: 'Ágrajz', icon: 'swords' },
                 { tab: 'rules' as const, label: 'Játékszabály', icon: 'newspaper' }
               ].map((item) => {
