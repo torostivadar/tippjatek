@@ -12,6 +12,7 @@ import { Rules } from '@/src/components/Rules';
 import { CrossroadsModal } from '@/src/components/CrossroadsModal';
 import { Groups } from '@/src/components/Groups';
 import { TeamProfile } from '@/src/components/TeamProfile';
+import { Bracket } from '@/src/components/Bracket';
 
 // Full list of 48 teams in the World Cup
 const TEAMS_LIST = [
@@ -279,7 +280,19 @@ export default function Home() {
           />
         )}
 
-        {/* 4. RULES TAB */}
+        {/* 4. BRACKET TAB */}
+        {activeTab === 'bracket' && (
+          <Bracket 
+            matches={matches}
+            predictions={predictions}
+            onSelectMatch={(matchId) => {
+              setSelectedMatchId(matchId);
+              setMobileDetailOpen(true);
+            }}
+          />
+        )}
+
+        {/* 5. RULES TAB */}
         {activeTab === 'rules' && (
           <Rules />
         )}

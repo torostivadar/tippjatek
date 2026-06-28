@@ -19,8 +19,8 @@ const TEAMS_LIST = [
 const AVATARS_LIST = ['🦁', '🦊', '🐻', '🐼', '🐨', '🐯', '🐱', '🐶', '🐸', '🐵', '🐔', '🐧', '🐙', '🦄', '🦖', '🐬', '🐝', '🦉', '🐺', '🐰'];
 
 interface NavigationProps {
-  activeTab: 'matches' | 'leaderboard' | 'groups' | 'rules';
-  setActiveTab: (tab: 'matches' | 'leaderboard' | 'groups' | 'rules') => void;
+  activeTab: 'matches' | 'leaderboard' | 'groups' | 'bracket' | 'rules';
+  setActiveTab: (tab: 'matches' | 'leaderboard' | 'groups' | 'bracket' | 'rules') => void;
   user: User | null;
   username?: string;
   favoriteTeam?: string | null;
@@ -99,6 +99,17 @@ export function Navigation({
           >
             <Icon name="calendar" size={14} strokeWidth={2.4} />
             <span className="hidden sm:inline">Csoportok</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('bracket')}
+            className={`px-4 py-2 rounded-xl text-[11px] font-bold uppercase tracking-[0.15em] transition-all duration-200 flex items-center gap-2
+              ${activeTab === 'bracket' 
+                ? 'bg-accent text-white shadow-[0_8px_20px_-8px_rgba(124,58,237,0.7)]' 
+                : 'text-mid hover:text-ink hover:bg-wash'}`}
+          >
+            <Icon name="swords" size={14} strokeWidth={2.4} />
+            <span className="hidden sm:inline">Ágrajz</span>
           </button>
 
           <button
@@ -331,6 +342,7 @@ export function Navigation({
                 { tab: 'matches' as const, label: 'Mérkőzések', icon: 'whistle' },
                 { tab: 'leaderboard' as const, label: 'Ranglista', icon: 'trophy' },
                 { tab: 'groups' as const, label: 'Csoportok', icon: 'calendar' },
+                { tab: 'bracket' as const, label: 'Ágrajz', icon: 'swords' },
                 { tab: 'rules' as const, label: 'Játékszabály', icon: 'newspaper' }
               ].map((item) => {
                 const isActive = activeTab === item.tab;

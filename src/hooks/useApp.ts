@@ -10,7 +10,7 @@ export function useApp() {
   const [predictions, setPredictions] = useState<Prediction[]>([]);
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [eliminatedTeams, setEliminatedTeams] = useState<string[]>([]);
-  const [activeTab, setActiveTab] = useState<'matches' | 'leaderboard' | 'groups' | 'rules'>('matches');
+  const [activeTab, setActiveTab] = useState<'matches' | 'leaderboard' | 'groups' | 'bracket' | 'rules'>('matches');
   const [teams, setTeams] = useState<Team[]>([]);
 
   // Load User Auth Session
