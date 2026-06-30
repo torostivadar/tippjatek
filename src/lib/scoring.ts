@@ -54,6 +54,12 @@ export async function scoreMatch(
             .values({ team_name: eliminated })
             .onConflictDoNothing();
           console.log(`Knockout loser automatically eliminated: ${eliminated}`);
+
+          // Determine the winner of the knockout match
+          const winner = eliminated === matchRecord.team_a ? matchRecord.team_b : matchRecord.team_a;
+          
+          // Propagate the results to the next round of the tournament tree
+          await propagateKnockoutResult(matchId, winner, eliminated);
         }
       }
     }
@@ -133,6 +139,9 @@ export async function scoreMatch(
             )
           );
         console.log(`Knockout match reverted: removed ${matchRecord.team_a} and ${matchRecord.team_b} from eliminatedTeams`);
+
+        // Revert the next match in the tournament tree back to placeholders
+        await revertKnockoutResult(matchId);
       }
     }
   }
@@ -212,3 +221,89 @@ export async function scoreMatch(
 
   await Promise.all(profileUpdates);
 }
+
+// Tournament Knockout Flow mapping
+const KNOCKOUT_FLOW = {
+  // Round of 32 -> Round of 16
+  '73': { nextMatchId: '90', slot: 'team_a' as const },
+  '75': { nextMatchId: '90', slot: 'team_b' as const },
+  '74': { nextMatchId: '89', slot: 'team_a' as const },
+  '77': { nextMatchId: '89', slot: 'team_b' as const },
+  '76': { nextMatchId: '91', slot: 'team_a' as const },
+  '78': { nextMatchId: '91', slot: 'team_b' as const },
+  '79': { nextMatchId: '92', slot: 'team_a' as const },
+  '80': { nextMatchId: '92', slot: 'team_b' as const },
+  '81': { nextMatchId: '94', slot: 'team_a' as const },
+  '84': { nextMatchId: '94', slot: 'team_b' as const },
+  '82': { nextMatchId: '93', slot: 'team_a' as const },
+  '83': { nextMatchId: '93', slot: 'team_b' as const },
+  '85': { nextMatchId: '95', slot: 'team_a' as const },
+  '86': { nextMatchId: '95', slot: 'team_b' as const },
+  '87': { nextMatchId: '96', slot: 'team_a' as const },
+  '88': { nextMatchId: '96', slot: 'team_b' as const },
+
+  // Round of 16 -> Quarter-finals
+  '89': { nextMatchId: '97', slot: 'team_a' as const },
+  '90': { nextMatchId: '97', slot: 'team_b' as const },
+  '91': { nextMatchId: '98', slot: 'team_a' as const },
+  '92': { nextMatchId: '98', slot: 'team_b' as const },
+  '93': { nextMatchId: '99', slot: 'team_a' as const },
+  '94': { nextMatchId: '99', slot: 'team_b' as const },
+  '95': { nextMatchId: '100', slot: 'team_a' as const },
+  '96': { nextMatchId: '100', slot: 'team_b' as const },
+
+  // Quarter-finals -> Semi-finals
+  '97': { nextMatchId: '101', slot: 'team_a' as const },
+  '98': { nextMatchId: '101', slot: 'team_b' as const },
+  '99': { nextMatchId: '102', slot: 'team_a' as const },
+  '100': { nextMatchId: '102', slot: 'team_b' as const },
+};
+
+async function propagateKnockoutResult(matchId: string, winner: string, loser: string) {
+  console.log(`Propagating knockout result for Match #${matchId}: Winner=${winner}, Loser=${loser}`);
+
+  const flow = KNOCKOUT_FLOW[matchId as keyof typeof KNOCKOUT_FLOW];
+  if (flow) {
+    await db
+      .update(matches)
+      .set({ [flow.slot]: winner })
+      .where(eq(matches.id, flow.nextMatchId));
+    console.log(`Propagated Winner (${winner}) of Match #${matchId} to Match #${flow.nextMatchId} (${flow.slot})`);
+  }
+
+  // Semi-finals feed BOTH Final (#104) and 3rd Place (#103)
+  if (matchId === '101') {
+    await db.update(matches).set({ team_a: winner }).where(eq(matches.id, '104'));
+    await db.update(matches).set({ team_a: loser }).where(eq(matches.id, '103'));
+    console.log(`Propagated SF Match #101 Winner (${winner}) to Final (#104) and Loser (${loser}) to 3rd Place (#103)`);
+  } else if (matchId === '102') {
+    await db.update(matches).set({ team_b: winner }).where(eq(matches.id, '104'));
+    await db.update(matches).set({ team_b: loser }).where(eq(matches.id, '103'));
+    console.log(`Propagated SF Match #102 Winner (${winner}) to Final (#104) and Loser (${loser}) to 3rd Place (#103)`);
+  }
+}
+
+async function revertKnockoutResult(matchId: string) {
+  console.log(`Reverting knockout results for Match #${matchId}`);
+
+  const flow = KNOCKOUT_FLOW[matchId as keyof typeof KNOCKOUT_FLOW];
+  if (flow) {
+    const placeholder = `W-${matchId}`;
+    await db
+      .update(matches)
+      .set({ [flow.slot]: placeholder })
+      .where(eq(matches.id, flow.nextMatchId));
+    console.log(`Reverted Match #${flow.nextMatchId} (${flow.slot}) back to placeholder ${placeholder}`);
+  }
+
+  if (matchId === '101') {
+    await db.update(matches).set({ team_a: 'W-101' }).where(eq(matches.id, '104'));
+    await db.update(matches).set({ team_a: 'L-101' }).where(eq(matches.id, '103'));
+    console.log(`Reverted Match #104 team_a to W-101 and Match #103 team_a to L-101`);
+  } else if (matchId === '102') {
+    await db.update(matches).set({ team_b: 'W-102' }).where(eq(matches.id, '104'));
+    await db.update(matches).set({ team_b: 'L-102' }).where(eq(matches.id, '103'));
+    console.log(`Reverted Match #104 team_b to W-102 and Match #103 team_b to L-102`);
+  }
+}
+
