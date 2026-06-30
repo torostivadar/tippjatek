@@ -201,16 +201,23 @@ export async function syncMatchesAndScore(targetMatchIds?: string[]) {
     }
 
     const apiStatus = apiFixture.status;
-    const goalsHome = apiFixture.score?.fullTime?.home;
-    const goalsAway = apiFixture.score?.fullTime?.away;
-
-    // Check if match is finished (FINISHED)
     const isFinished = apiStatus === 'FINISHED';
     const isLive = ['IN_PLAY', 'PAUSED'].includes(apiStatus);
 
+    let goalsHome = apiFixture.score?.fullTime?.home;
+    let goalsAway = apiFixture.score?.fullTime?.away;
+
+    // Check if the match went to a penalty shootout (score.penalties is not null)
+    if (isFinished && apiFixture.score?.penalties?.home !== null && apiFixture.score?.penalties?.away !== null) {
+      // If it went to penalties, read the score at 120 minutes from score.extraTime
+      if (apiFixture.score?.extraTime?.home !== null && apiFixture.score?.extraTime?.away !== null) {
+        goalsHome = apiFixture.score.extraTime.home;
+        goalsAway = apiFixture.score.extraTime.away;
+        console.log(`[Sync Penalties Fallback] Match #${dbMatch.id} went to penalties. Overriding fullTime with extraTime score: ${goalsHome}-${goalsAway}`);
+      }
+    }
+
     if (isFinished && goalsHome !== null && goalsAway !== null) {
-      // In football-data.org, score.fullTime contains the score at the end of regular or extra time, 
-      // but completely excludes penalty shootouts (which is exactly what we need!).
       const scoreA = Number(goalsHome);
       const scoreB = Number(goalsAway);
 
