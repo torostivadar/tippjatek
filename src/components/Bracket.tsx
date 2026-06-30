@@ -96,15 +96,6 @@ export function Bracket({ matches, predictions, onSelectMatch }: BracketProps) {
           </div>
         </div>
 
-        {/* Prediction Indicator */}
-        {pred && (
-          <div className="mt-1 pt-0.5 border-t border-dashed border-line flex items-center justify-between text-[7px] font-bold text-accent shrink-0">
-            <span>Tipp</span>
-            <span className="font-mono tabular-nums bg-accent/5 px-1 rounded text-[7.5px]">
-              {pred.predicted_a} - {pred.predicted_b}
-            </span>
-          </div>
-        )}
       </div>
     );
   };
