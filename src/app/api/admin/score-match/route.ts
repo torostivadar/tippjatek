@@ -23,7 +23,7 @@ export async function POST(req: NextRequest) {
     }
 
     // 2. Parse request parameters
-    const { matchId, scoreA, scoreB, status } = await req.json();
+    const { matchId, scoreA, scoreB, status, loserTeamName } = await req.json();
 
     if (!matchId || status === undefined) {
       return NextResponse.json({ error: 'Missing parameters: matchId and status are required' }, { status: 400 });
@@ -34,7 +34,8 @@ export async function POST(req: NextRequest) {
       matchId,
       scoreA !== null ? Number(scoreA) : null,
       scoreB !== null ? Number(scoreB) : null,
-      status
+      status,
+      loserTeamName
     );
 
     return NextResponse.json({ success: true });

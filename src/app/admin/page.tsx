@@ -30,6 +30,7 @@ export default function AdminPage() {
   const [scoreA, setScoreA] = useState<string>('');
   const [scoreB, setScoreB] = useState<string>('');
   const [status, setStatus] = useState<'NOT_STARTED' | 'LIVE' | 'FINISHED'>('NOT_STARTED');
+  const [loserTeamName, setLoserTeamName] = useState<string>('');
   
   const [submitting, setSubmitting] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
@@ -143,6 +144,7 @@ export default function AdminPage() {
     setScoreA(m.score_a !== null ? String(m.score_a) : '');
     setScoreB(m.score_b !== null ? String(m.score_b) : '');
     setStatus(m.status);
+    setLoserTeamName('');
     setSuccessMsg('');
     setAiSuccessMsg('');
   };
@@ -215,6 +217,9 @@ export default function AdminPage() {
         return;
       }
 
+      const isKnockout = ['Legjobb 32', 'Nyolcaddöntő', 'Negyeddöntő', 'Elődöntő', 'Döntő'].includes(selectedMatch.group);
+      const isDraw = scoreA !== '' && scoreB !== '' && Number(scoreA) === Number(scoreB);
+
       const res = await fetch('/api/admin/score-match', {
         method: 'POST',
         headers: {
@@ -225,7 +230,8 @@ export default function AdminPage() {
           matchId: selectedMatch.id,
           scoreA: scoreA === '' ? null : Number(scoreA),
           scoreB: scoreB === '' ? null : Number(scoreB),
-          status
+          status,
+          loserTeamName: (isKnockout && isDraw) ? loserTeamName : undefined
         })
       });
 
@@ -468,6 +474,28 @@ export default function AdminPage() {
                   </div>
                 </div>
 
+                {status === 'FINISHED' && 
+                 ['Legjobb 32', 'Nyolcaddöntő', 'Negyeddöntő', 'Elődöntő', 'Döntő'].includes(selectedMatch.group) && 
+                 scoreA !== '' && 
+                 scoreB !== '' && 
+                 Number(scoreA) === Number(scoreB) && (
+                  <div className="space-y-2">
+                    <label className="block text-[10px] font-bold text-red-500 uppercase tracking-wider">
+                      Kieső csapat (Döntetlen / Büntetők után)
+                    </label>
+                    <select
+                      value={loserTeamName}
+                      onChange={(e) => setLoserTeamName(e.target.value)}
+                      required
+                      className="w-full p-3 bg-red-50/50 border border-red-200 rounded-2xl focus:outline-none focus:border-red-500 text-sm font-semibold text-red-950"
+                    >
+                      <option value="">-- Válassz kieső csapatot --</option>
+                      <option value={selectedMatch.team_a}>{selectedMatch.team_a} (Kiesett)</option>
+                      <option value={selectedMatch.team_b}>{selectedMatch.team_b} (Kiesett)</option>
+                    </select>
+                  </div>
+                )}
+
                 {status === 'FINISHED' && (scoreA === '' || scoreB === '') && (
                   <div className="p-3 bg-amber-50 border border-amber-200 text-amber-800 text-xs rounded-xl font-medium leading-relaxed">
                     FINISHED státuszban meg kell adni a gólok számát a pontszámításhoz!
@@ -476,7 +504,16 @@ export default function AdminPage() {
 
                 <button
                   type="submit"
-                  disabled={submitting || (status === 'FINISHED' && (scoreA === '' || scoreB === ''))}
+                  disabled={
+                    submitting || 
+                    (status === 'FINISHED' && (scoreA === '' || scoreB === '')) ||
+                    (status === 'FINISHED' && 
+                     ['Legjobb 32', 'Nyolcaddöntő', 'Negyeddöntő', 'Elődöntő', 'Döntő'].includes(selectedMatch.group) && 
+                     scoreA !== '' && 
+                     scoreB !== '' && 
+                     Number(scoreA) === Number(scoreB) && 
+                     !loserTeamName)
+                  }
                   className="w-full py-3.5 rounded-2xl bg-accent text-white font-bold text-[12px] uppercase tracking-[0.14em] flex items-center justify-center gap-2 hover:brightness-105 active:brightness-95 transition-all shadow-[0_12px_28px_-12px_rgba(124,58,237,0.7)] disabled:bg-slate-300 disabled:shadow-none"
                 >
                   {submitting ? (
