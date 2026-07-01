@@ -92,7 +92,7 @@ A válaszod KIZÁRÓLAG ez a JSON struktúra legyen, semmi más:
 
   try {
     response = await callWithRetry({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-2.0-flash',
       contents: prompt,
       config: {
         tools: [{ googleSearch: {} }],
