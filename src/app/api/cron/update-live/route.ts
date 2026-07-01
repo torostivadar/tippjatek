@@ -8,6 +8,7 @@ import { getUtcTimestamp } from '@/src/lib/utils';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
+export const maxDuration = 60; // 60 seconds timeout limit on Vercel
 
 export async function GET(req: NextRequest) {
   try {
@@ -86,13 +87,23 @@ export async function GET(req: NextRequest) {
 
     // 5. Run the API-Football sync for the target matches only
     console.log(`Matches to sync: [${matchesToSync.map(m => `${m.team_a}-${m.team_b} (${m.id})`).join(', ')}]. Syncing with API-Football...`);
-    const result = await syncMatchesAndScore(matchIds);
-
-    return NextResponse.json({ 
-      success: true, 
-      message: 'Sync completed successfully.', 
-      result 
-    });
+    
+    try {
+      const result = await syncMatchesAndScore(matchIds);
+      return NextResponse.json({ 
+        success: true, 
+        message: 'Sync completed successfully.', 
+        result 
+      });
+    } catch (syncErr: any) {
+      console.error('Error during matches sync, releasing throttle lock:', syncErr);
+      // Reset last_sync_attempt to null so that the next request can retry immediately
+      await db
+        .update(matches)
+        .set({ last_sync_attempt: null })
+        .where(inArray(matches.id, matchIds));
+      throw syncErr; // Rethrow to be caught by the outer catch block
+    }
 
   } catch (err: any) {
     console.error('Cron job error:', err);
