@@ -145,9 +145,9 @@ export function Bracket({ matches, predictions, onSelectMatch }: BracketProps) {
               Nyolcaddöntő ágak (Legjobb 32 ➔ 16)
             </span>
             {[
-              { r16: '90', feed: ['73', '75'], side: 'Bal ág' },
-              { r16: '89', feed: ['74', '77'], side: 'Bal ág' },
-              { r16: '91', feed: ['76', '78'], side: 'Bal ág' },
+              { r16: '89', feed: ['73', '76'], side: 'Bal ág' },
+              { r16: '90', feed: ['75', '78'], side: 'Bal ág' },
+              { r16: '91', feed: ['74', '77'], side: 'Bal ág' },
               { r16: '92', feed: ['79', '80'], side: 'Bal ág' },
               { r16: '94', feed: ['81', '84'], side: 'Jobb ág' },
               { r16: '93', feed: ['82', '83'], side: 'Jobb ág' },
@@ -263,9 +263,9 @@ export function Bracket({ matches, predictions, onSelectMatch }: BracketProps) {
             {/* COLUMN 1: LEFT ROUND OF 32 */}
             <div className="h-[800px] flex flex-col justify-between">
               {[
-                { top: '73', bottom: '75' },
+                { top: '73', bottom: '76' },
+                { top: '75', bottom: '78' },
                 { top: '74', bottom: '77' },
-                { top: '76', bottom: '78' },
                 { top: '79', bottom: '80' }
               ].map((pair, idx) => (
                 <div key={idx} className="h-[200px] flex flex-col justify-center gap-1.5">
@@ -286,7 +286,7 @@ export function Bracket({ matches, predictions, onSelectMatch }: BracketProps) {
 
             {/* COLUMN 3: LEFT ROUND OF 16 */}
             <div className="h-[800px] flex flex-col justify-between">
-              {['90', '89', '91', '92'].map(id => (
+              {['89', '90', '91', '92'].map(id => (
                 <div key={id} className="h-[200px] flex items-center">
                   {renderMatchCard(id)}
                 </div>

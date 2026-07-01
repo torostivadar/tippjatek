@@ -225,12 +225,12 @@ export async function scoreMatch(
 // Tournament Knockout Flow mapping
 const KNOCKOUT_FLOW = {
   // Round of 32 -> Round of 16
-  '73': { nextMatchId: '90', slot: 'team_a' as const },
-  '75': { nextMatchId: '90', slot: 'team_b' as const },
-  '74': { nextMatchId: '89', slot: 'team_a' as const },
-  '77': { nextMatchId: '89', slot: 'team_b' as const },
-  '76': { nextMatchId: '91', slot: 'team_a' as const },
-  '78': { nextMatchId: '91', slot: 'team_b' as const },
+  '73': { nextMatchId: '89', slot: 'team_a' as const },
+  '76': { nextMatchId: '89', slot: 'team_b' as const },
+  '75': { nextMatchId: '90', slot: 'team_a' as const },
+  '78': { nextMatchId: '90', slot: 'team_b' as const },
+  '74': { nextMatchId: '91', slot: 'team_a' as const },
+  '77': { nextMatchId: '91', slot: 'team_b' as const },
   '79': { nextMatchId: '92', slot: 'team_a' as const },
   '80': { nextMatchId: '92', slot: 'team_b' as const },
   '81': { nextMatchId: '94', slot: 'team_a' as const },
