@@ -208,9 +208,9 @@ export async function syncMatchesAndScore(targetMatchIds?: string[]) {
     let goalsAway = apiFixture.score?.fullTime?.away;
 
     // Check if the match went to a penalty shootout (score.penalties is not null)
-    if (isFinished && apiFixture.score?.penalties?.home !== null && apiFixture.score?.penalties?.away !== null) {
+    if (isFinished && apiFixture.score?.penalties?.home != null && apiFixture.score?.penalties?.away != null) {
       // If it went to penalties, read the score at 120 minutes from score.extraTime
-      if (apiFixture.score?.extraTime?.home !== null && apiFixture.score?.extraTime?.away !== null) {
+      if (apiFixture.score?.extraTime?.home != null && apiFixture.score?.extraTime?.away != null) {
         goalsHome = apiFixture.score.extraTime.home;
         goalsAway = apiFixture.score.extraTime.away;
         console.log(`[Sync Penalties Fallback] Match #${dbMatch.id} went to penalties. Overriding fullTime with extraTime score: ${goalsHome}-${goalsAway}`);
