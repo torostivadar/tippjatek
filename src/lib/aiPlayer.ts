@@ -15,8 +15,9 @@ export function calculateScoreFromStats(stats: MatchStats): { scoreA: number, sc
   const tempA = stats.teamA.temp;
   const tempB = stats.teamB.temp;
 
-  let expA = 1.35 * (attackA / defenseB) * (tempA / 50);
-  let expB = 1.35 * (attackB / defenseA) * (tempB / 50);
+  // Reduced expected goals multiplier from 1.35 to 1.05 for more realistic scores
+  let expA = 1.05 * (attackA / defenseB) * (tempA / 50);
+  let expB = 1.05 * (attackB / defenseA) * (tempB / 50);
 
   const maxProb = Math.max(winA, draw, winB);
   
@@ -25,25 +26,27 @@ export function calculateScoreFromStats(stats: MatchStats): { scoreA: number, sc
 
   if (maxProb === draw) {
     const base = Math.round((expA + expB) / 2);
-    const goals = Math.min(Math.max(base, 0), 3);
+    const goals = Math.min(Math.max(base, 0), 2); // Cap draws at max 2-2
     scoreA = goals;
     scoreB = goals;
   } else if (maxProb === winA) {
     scoreA = Math.round(expA);
-    scoreB = Math.round(expB);
+    // If favorite has strong defense (>= 80), lean towards clean sheet or max 1 goal conceded
+    scoreB = defenseA >= 80 ? Math.min(Math.round(expB), 1) : Math.round(expB);
     if (scoreA <= scoreB) {
       scoreA = scoreB + 1;
     }
-    scoreA = Math.min(Math.max(scoreA, 1), 5);
-    scoreB = Math.min(Math.max(scoreB, 0), 4);
+    scoreA = Math.min(Math.max(scoreA, 1), 4);
+    scoreB = Math.min(Math.max(scoreB, 0), 3);
   } else {
-    scoreA = Math.round(expA);
+    // If favorite has strong defense (>= 80), lean towards clean sheet or max 1 goal conceded
+    scoreA = defenseB >= 80 ? Math.min(Math.round(expA), 1) : Math.round(expA);
     scoreB = Math.round(expB);
     if (scoreB <= scoreA) {
       scoreB = scoreA + 1;
     }
-    scoreB = Math.min(Math.max(scoreB, 1), 5);
-    scoreA = Math.min(Math.max(scoreA, 0), 4);
+    scoreB = Math.min(Math.max(scoreB, 1), 4);
+    scoreA = Math.min(Math.max(scoreA, 0), 3);
   }
 
   return { scoreA, scoreB };
