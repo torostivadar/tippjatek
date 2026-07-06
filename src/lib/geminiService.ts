@@ -25,11 +25,10 @@ A fogadási szorzókat (odds) a következőképpen add meg az "odds" objektumban
 
   if (isBelgUsa) {
     return `\nFONTOS: A két csapat egymás elleni legutóbbi mérkőzéseinek (H2H) a következő valós eredményeket kell megadnod a "h2h" tömbben (mivel a kereső hallucinálhat):
+- 2026: Egyesült Államok 2 - 5 Belgium (Barátságos, eredmény: Belgium nyert)
 - 2014: Belgium 2 - 1 Egyesült Államok (Világbajnokság, hosszabbítás után, eredmény: Belgium nyert)
 - 2013: Egyesült Államok 2 - 4 Belgium (Barátságos, eredmény: Belgium nyert)
 - 2011: Belgium 1 - 0 Egyesült Államok (Barátságos, eredmény: Belgium nyert)
-- 1998: Belgium 2 - 0 Egyesült Államok (Barátságos, eredmény: Belgium nyert)
-- 1930: Egyesült Államok 3 - 0 Belgium (Világbajnokság, eredmény: Egyesült Államok nyert)
 
 A fogadási szorzókat (odds) a következőképpen add meg az "odds" objektumban:
 - ha Belgium a hazai (home): { "home": 2.58, "draw": 3.30, "away": 2.38 }
