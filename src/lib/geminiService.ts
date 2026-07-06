@@ -29,7 +29,15 @@ A fogadási szorzókat (odds) a következőképpen add meg az "odds" objektumban
 - 2013: Egyesült Államok 2 - 4 Belgium (Barátságos, eredmény: Belgium nyert)
 - 2011: Belgium 1 - 0 Egyesült Államok (Barátságos, eredmény: Belgium nyert)
 - 1998: Belgium 2 - 0 Egyesült Államok (Barátságos, eredmény: Belgium nyert)
-- 1930: Egyesült Államok 3 - 0 Belgium (Világbajnokság, eredmény: Egyesült Államok nyert)\n`;
+- 1930: Egyesült Államok 3 - 0 Belgium (Világbajnokság, eredmény: Egyesült Államok nyert)
+
+A fogadási szorzókat (odds) a következőképpen add meg az "odds" objektumban:
+- ha Belgium a hazai (home): { "home": 2.58, "draw": 3.30, "away": 2.38 }
+- ha Egyesült Államok a hazai (home): { "home": 2.38, "draw": 3.30, "away": 2.58 }
+
+A valószínűségeket (probabilities) a következőképpen add meg a "probabilities" objektumban:
+- ha Belgium a hazai (home): { "home": 37, "draw": 25, "away": 38 }
+- ha Egyesült Államok a hazai (home): { "home": 38, "draw": 25, "away": 37 }\n`;
   }
 
   return '';
