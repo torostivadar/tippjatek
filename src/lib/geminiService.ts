@@ -16,7 +16,11 @@ function getH2HOverride(teamA: string, teamB: string): string {
 - 2022: Portugália 0 - 1 Spanyolország (Nemzetek Ligája, eredmény: Spanyolország nyert)
 - 2022: Spanyolország 1 - 1 Portugália (Nemzetek Ligája, eredmény: döntetlen)
 - 2021: Spanyolország 0 - 0 Portugália (Barátságos, eredmény: döntetlen)
-- 2020: Portugália 0 - 0 Spanyolország (Barátságos, eredmény: döntetlen)\n`;
+- 2020: Portugália 0 - 0 Spanyolország (Barátságos, eredmény: döntetlen)
+
+A fogadási szorzókat (odds) a következőképpen add meg az "odds" objektumban:
+- ha Portugália a hazai (home): { "home": 4.00, "draw": 3.50, "away": 1.90 }
+- ha Spanyolország a hazai (home): { "home": 1.90, "draw": 3.50, "away": 4.00 }\n`;
   }
 
   if (isBelgUsa) {
