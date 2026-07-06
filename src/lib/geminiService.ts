@@ -3,6 +3,34 @@ import type { MatchStats } from '@/src/types';
 
 const genAI = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || '' });
 
+function getH2HOverride(teamA: string, teamB: string): string {
+  const normA = teamA.trim().toLowerCase();
+  const normB = teamB.trim().toLowerCase();
+
+  const isPortSpay = (normA === 'portugália' && normB === 'spanyolország') || (normA === 'spanyolország' && normB === 'portugália');
+  const isBelgUsa = (normA === 'belgium' && (normB === 'egyesült államok' || normB === 'usa')) || ((normA === 'egyesült államok' || normA === 'usa') && normB === 'belgium');
+
+  if (isPortSpay) {
+    return `\nFONTOS: A két csapat egymás elleni legutóbbi mérkőzéseinek (H2H) a következő valós eredményeket kell megadnod a "h2h" tömbben (mivel a kereső hallucinálhat):
+- 2025: Portugália 2 - 2 Spanyolország (Nemzetek Ligája Döntő, eredmény: döntetlen)
+- 2022: Portugália 0 - 1 Spanyolország (Nemzetek Ligája, eredmény: Spanyolország nyert)
+- 2022: Spanyolország 1 - 1 Portugália (Nemzetek Ligája, eredmény: döntetlen)
+- 2021: Spanyolország 0 - 0 Portugália (Barátságos, eredmény: döntetlen)
+- 2020: Portugália 0 - 0 Spanyolország (Barátságos, eredmény: döntetlen)\n`;
+  }
+
+  if (isBelgUsa) {
+    return `\nFONTOS: A két csapat egymás elleni legutóbbi mérkőzéseinek (H2H) a következő valós eredményeket kell megadnod a "h2h" tömbben (mivel a kereső hallucinálhat):
+- 2014: Belgium 2 - 1 Egyesült Államok (Világbajnokság, hosszabbítás után, eredmény: Belgium nyert)
+- 2013: Egyesült Államok 2 - 4 Belgium (Barátságos, eredmény: Belgium nyert)
+- 2011: Belgium 1 - 0 Egyesült Államok (Barátságos, eredmény: Belgium nyert)
+- 1998: Belgium 2 - 0 Egyesült Államok (Barátságos, eredmény: Belgium nyert)
+- 1930: Egyesült Államok 3 - 0 Belgium (Világbajnokság, eredmény: Egyesült Államok nyert)\n`;
+  }
+
+  return '';
+}
+
 /**
  * Generate AI analysis data for a given match using Gemini 1.5 Pro
  * with Google Search grounding for real-time data.
@@ -14,8 +42,9 @@ export async function generateMatchAIData(
   apiKey?: string
 ): Promise<MatchStats> {
   const dateInfo = matchDate ? ` A mérkőzés tervezett kezdési időpontja: ${matchDate}.` : '';
+  const h2hOverride = getH2HOverride(teamA, teamB);
   const prompt = `Használd a Google Keresést! Nézz utána a legfrissebb híreknek és oddsoknak (különösen a Tippmixpro kínálatát figyelembe véve: https://www.tippmixpro.hu/hu/fogadas/i/fogadas/labdarugas/1/vilag/240/helyszin) a ${teamA} és ${teamB} közötti 2026-os labdarúgó-világbajnoki mérkőzéssel kapcsolatban.
-Ez a mérkőzés a 2026-os labdarúgó-világbajnokság (főtábla / csoportkör) VALÓS mérkőzése, NEM selejtező!${dateInfo} A hírek és az oddsok keresésekor erre koncentrálj.
+Ez a mérkőzés a 2026-os labdarúgó-világbajnokság (főtábla / csoportkör) VALÓS mérkőzése, NEM selejtező!${dateInfo} A hírek és az oddsok keresésekor erre koncentrálj.${h2hOverride}
 
 Töltsd fel az alábbi JSON struktúrát valós, friss adatokkal, KIZÁRÓLAG magyar nyelven!
 
