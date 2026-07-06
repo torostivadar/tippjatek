@@ -1077,7 +1077,7 @@ export function MatchDetail({ match, prediction, onSave, favoriteTeam, teams = [
             </div>
             <button
               onClick={() => {
-                if (isFav) {
+                if (!isTuti && isFav) {
                   alert('A TUTI TIPP és a Kedvenc Csapat bónusz nem vonható össze egy meccsen!');
                   return;
                 }

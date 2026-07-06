@@ -74,6 +74,10 @@ export async function scoreMatch(
     const allProfiles = await db.select().from(profiles);
     const profileMap = new Map(allProfiles.map(p => [p.id, p]));
 
+    // Fetch all eliminated teams to get their elimination dates
+    const allEliminated = await db.select().from(eliminatedTeams);
+    const eliminatedMap = new Map(allEliminated.map(e => [e.team_name, e.eliminated_at]));
+
     const predictionUpdates = matchPredictions.map(async (pred) => {
       const profile = profileMap.get(pred.user_id);
       if (!profile) return;
@@ -84,8 +88,23 @@ export async function scoreMatch(
       const outcome = (actA > actB && pA > pB) || (actA < actB && pA < pB) || (actA === actB && pA === pB);
       const banker = pred.is_tuti;
 
-      const isFavTeamPlaying = matchRecord && profile.favorite_team && 
-        (matchRecord.team_a === profile.favorite_team || matchRecord.team_b === profile.favorite_team);
+      // Determine what the user's favorite team was at the time of the match
+      let activeFavoriteTeam: string | null = profile.favorite_team;
+      
+      if (profile.has_transferred && profile.original_favorite_team) {
+        const originalTeamEliminatedAt = eliminatedMap.get(profile.original_favorite_team);
+        if (originalTeamEliminatedAt && matchRecord) {
+          const matchTime = new Date(matchRecord.start_time).getTime();
+          const elimTime = new Date(originalTeamEliminatedAt).getTime();
+          
+          if (matchTime < elimTime) {
+            activeFavoriteTeam = profile.original_favorite_team;
+          }
+        }
+      }
+
+      const isFavTeamPlaying = matchRecord && activeFavoriteTeam && 
+        (matchRecord.team_a === activeFavoriteTeam || matchRecord.team_b === activeFavoriteTeam);
 
       let earned = 0;
       if (banker) {

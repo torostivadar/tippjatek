@@ -9,6 +9,7 @@ export const profiles = pgTable('profiles', {
   correct_scores: integer('correct_scores').default(0).notNull(),
   correct_outcomes: integer('correct_outcomes').default(0).notNull(),
   favorite_team: text('favorite_team'), // User's selected favorite team for "Fan Factor" (double points)
+  original_favorite_team: text('original_favorite_team'), // User's original favorite team before crossroads transfer
   champion_prediction: text('champion_prediction'), // User's prediction for World Cup winner
   has_transferred: boolean('has_transferred').default(false).notNull(), // Has transferred favorite team after knockout
   crossroads_bonus: integer('crossroads_bonus').default(0).notNull(), // Bonus/penalty points from crossroads choice (-30 or +30)

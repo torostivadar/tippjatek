@@ -67,6 +67,7 @@ export async function POST(req: NextRequest) {
       await db
         .update(profiles)
         .set({
+          original_favorite_team: profile.favorite_team,
           favorite_team: newFavoriteTeam,
           has_transferred: true,
           crossroads_bonus: -30,
