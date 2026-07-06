@@ -149,8 +149,8 @@ export function Bracket({ matches, predictions, onSelectMatch }: BracketProps) {
               { r16: '90', feed: ['75', '78'], side: 'Bal ág' },
               { r16: '91', feed: ['74', '77'], side: 'Bal ág' },
               { r16: '92', feed: ['79', '80'], side: 'Bal ág' },
-              { r16: '94', feed: ['81', '84'], side: 'Jobb ág' },
-              { r16: '93', feed: ['82', '83'], side: 'Jobb ág' },
+              { r16: '94', feed: ['81', '82'], side: 'Jobb ág' },
+              { r16: '93', feed: ['84', '83'], side: 'Jobb ág' },
               { r16: '95', feed: ['85', '86'], side: 'Jobb ág' },
               { r16: '96', feed: ['87', '88'], side: 'Jobb ág' }
             ].map((group) => (
@@ -416,8 +416,8 @@ export function Bracket({ matches, predictions, onSelectMatch }: BracketProps) {
             {/* COLUMN 17: RIGHT ROUND OF 32 */}
             <div className="h-[800px] flex flex-col justify-between">
               {[
-                { top: '81', bottom: '84' },
-                { top: '82', bottom: '83' },
+                { top: '81', bottom: '82' },
+                { top: '84', bottom: '83' },
                 { top: '85', bottom: '86' },
                 { top: '87', bottom: '88' }
               ].map((pair, idx) => (
