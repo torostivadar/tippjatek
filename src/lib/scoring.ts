@@ -256,9 +256,9 @@ const KNOCKOUT_FLOW = {
   '82': { nextMatchId: '94', slot: 'team_b' as const },
   '84': { nextMatchId: '93', slot: 'team_a' as const },
   '83': { nextMatchId: '93', slot: 'team_b' as const },
-  '85': { nextMatchId: '95', slot: 'team_a' as const },
+  '85': { nextMatchId: '96', slot: 'team_a' as const },
   '86': { nextMatchId: '95', slot: 'team_b' as const },
-  '87': { nextMatchId: '96', slot: 'team_a' as const },
+  '87': { nextMatchId: '95', slot: 'team_a' as const },
   '88': { nextMatchId: '96', slot: 'team_b' as const },
 
   // Round of 16 -> Quarter-finals
