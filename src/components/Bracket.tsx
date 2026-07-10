@@ -151,8 +151,8 @@ export function Bracket({ matches, predictions, onSelectMatch }: BracketProps) {
               { r16: '92', feed: ['79', '80'], side: 'Bal ág' },
               { r16: '94', feed: ['81', '82'], side: 'Jobb ág' },
               { r16: '93', feed: ['84', '83'], side: 'Jobb ág' },
-              { r16: '95', feed: ['85', '86'], side: 'Jobb ág' },
-              { r16: '96', feed: ['87', '88'], side: 'Jobb ág' }
+              { r16: '95', feed: ['87', '86'], side: 'Jobb ág' },
+              { r16: '96', feed: ['85', '88'], side: 'Jobb ág' }
             ].map((group) => (
               <div key={group.r16} className="bg-wash/40 border border-line p-3 rounded-2xl space-y-2">
                 <div className="flex items-center justify-between text-[8px] font-bold text-faint uppercase">
@@ -418,8 +418,8 @@ export function Bracket({ matches, predictions, onSelectMatch }: BracketProps) {
               {[
                 { top: '81', bottom: '82' },
                 { top: '84', bottom: '83' },
-                { top: '85', bottom: '86' },
-                { top: '87', bottom: '88' }
+                { top: '87', bottom: '86' },
+                { top: '85', bottom: '88' }
               ].map((pair, idx) => (
                 <div key={idx} className="h-[200px] flex flex-col justify-center gap-1.5">
                   {renderMatchCard(pair.top)}
