@@ -54,7 +54,11 @@ export async function GET(req: NextRequest) {
         m.team_a.includes('/') ||
         m.team_a.includes('helyezettje') ||
         m.team_a.startsWith('W-') ||
-        m.team_a.startsWith('L-');
+        m.team_a.startsWith('L-') ||
+        m.team_b.includes('/') ||
+        m.team_b.includes('helyezettje') ||
+        m.team_b.startsWith('W-') ||
+        m.team_b.startsWith('L-');
       return !isTBD;
     });
 

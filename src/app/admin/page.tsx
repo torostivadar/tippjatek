@@ -396,7 +396,11 @@ export default function AdminPage() {
                   selectedMatch.team_a.includes('/') ||
                   selectedMatch.team_a.includes('helyezettje') ||
                   selectedMatch.team_a.startsWith('W-') ||
-                  selectedMatch.team_a.startsWith('L-')
+                  selectedMatch.team_a.startsWith('L-') ||
+                  selectedMatch.team_b.includes('/') ||
+                  selectedMatch.team_b.includes('helyezettje') ||
+                  selectedMatch.team_b.startsWith('W-') ||
+                  selectedMatch.team_b.startsWith('L-')
                 ) && (
                   <div className="pb-4 border-b border-line space-y-3">
                     <label className="block text-[10px] font-bold text-faint uppercase tracking-wider">

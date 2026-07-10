@@ -859,7 +859,11 @@ export function MatchDetail({ match, prediction, onSave, favoriteTeam, teams = [
     match.team_a.includes('/') || 
     match.team_a.includes('helyezettje') || 
     match.team_a.startsWith('W-') || 
-    match.team_a.startsWith('L-');
+    match.team_a.startsWith('L-') ||
+    match.team_b.includes('/') || 
+    match.team_b.includes('helyezettje') || 
+    match.team_b.startsWith('W-') || 
+    match.team_b.startsWith('L-');
 
   const theme = getGroupTheme(match.group);
   const hasPrediction = !!prediction;

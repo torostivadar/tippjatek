@@ -26,7 +26,11 @@ function deriveStatus(match: Match, pred: Prediction | undefined, favoriteTeam?:
     match.team_a.includes('/') || 
     match.team_a.includes('helyezettje') || 
     match.team_a.startsWith('W-') || 
-    match.team_a.startsWith('L-');
+    match.team_a.startsWith('L-') ||
+    match.team_b.includes('/') || 
+    match.team_b.includes('helyezettje') || 
+    match.team_b.startsWith('W-') || 
+    match.team_b.startsWith('L-');
 
   const ms = new Date(match.start_time).getTime() - Date.now();
   const within72 = ms > 0 && ms <= 72 * 3600000;
