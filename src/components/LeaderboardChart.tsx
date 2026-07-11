@@ -15,6 +15,14 @@ interface HistoryDataPoint {
   [playerName: string]: any;
 }
 
+interface RankDataPoint {
+  matchIndex: number;
+  matchId: string;
+  matchName: string;
+  ranks: Record<string, number>;
+  points: Record<string, number>;
+}
+
 export function LeaderboardChart({ profiles, currentUserId }: LeaderboardChartProps) {
   const [history, setHistory] = useState<HistoryDataPoint[]>([]);
   const [players, setPlayers] = useState<string[]>([]);
@@ -69,9 +77,32 @@ export function LeaderboardChart({ profiles, currentUserId }: LeaderboardChartPr
     );
   }
 
-  if (history.length === 0) {
+  if (history.length === 0 || players.length === 0) {
     return null;
   }
+
+  // Precalculate the rank and points of each player at each step
+  const rankHistory: RankDataPoint[] = history.map((point) => {
+    const stepRanks: Record<string, number> = {};
+    const stepPoints: Record<string, number> = {};
+
+    players.forEach((player) => {
+      const playerPoints = point[player] || 0;
+      stepPoints[player] = playerPoints;
+      
+      // Competition ranking: 1 + number of players who have strictly more points
+      const rank = 1 + players.filter((other) => (point[other] || 0) > playerPoints).length;
+      stepRanks[player] = rank;
+    });
+
+    return {
+      matchIndex: point.matchIndex,
+      matchId: point.matchId,
+      matchName: point.matchName,
+      ranks: stepRanks,
+      points: stepPoints
+    };
+  });
 
   // Predefined beautiful palette for players
   const colorPalette = [
@@ -102,8 +133,8 @@ export function LeaderboardChart({ profiles, currentUserId }: LeaderboardChartPr
   const width = 780;
   const height = 380;
   const paddingLeft = 45;
-  const paddingRight = 105; // Space for labels at the end
-  const paddingTop = 30;
+  const paddingRight = 115; // Space for labels at the end
+  const paddingTop = 35;
   const paddingBottom = 40;
 
   const chartWidth = width - paddingLeft - paddingRight;
@@ -114,26 +145,15 @@ export function LeaderboardChart({ profiles, currentUserId }: LeaderboardChartPr
     return paddingLeft + (index / totalMatches) * chartWidth;
   };
 
-  // Find max points in history for Y scale
-  let maxPointsValue = 0;
-  history.forEach((point) => {
-    players.forEach((player) => {
-      if (point[player] > maxPointsValue) {
-        maxPointsValue = point[player];
-      }
-    });
-  });
-  // Round up to nearest 50 for clean grid lines
-  const yMax = Math.max(Math.ceil(maxPointsValue / 50) * 50, 100);
-
-  // Y scale: maps points to Y coordinate (inverted for SVG coords)
-  const getY = (points: number) => {
-    return paddingTop + chartHeight - (points / yMax) * chartHeight;
+  // Y scale: maps rank (1 to players.length) to Y coordinate
+  // 1st place is at the top, last place is at the bottom (inverted layout)
+  const maxRank = Math.max(players.length, 2);
+  const getY = (rank: number) => {
+    return paddingTop + ((rank - 1) / (maxRank - 1)) * chartHeight;
   };
 
-  // Grid lines
-  const gridSteps = 5;
-  const yGridValues = Array.from({ length: gridSteps + 1 }, (_, i) => (yMax / gridSteps) * i);
+  // Y grid lines represent ranks (1., 2., 3., ... 10.)
+  const yGridRanks = Array.from({ length: maxRank }, (_, i) => i + 1);
 
   return (
     <div className="rounded-3xl border border-line bg-card overflow-hidden shadow-[0_18px_50px_-24px_rgba(16,24,40,0.30)] p-5 space-y-4">
@@ -143,19 +163,19 @@ export function LeaderboardChart({ profiles, currentUserId }: LeaderboardChartPr
           <Icon name="swords" size={18} className="text-accent" />
         </span>
         <div>
-          <h3 className="text-sm font-extrabold text-ink font-display uppercase tracking-wider">Pontok alakulása</h3>
-          <p className="text-[10px] text-faint font-medium mt-0.5">A ranglista menetelése mérkőzésről mérkőzésre (0 ➔ {totalMatches}. meccs)</p>
+          <h3 className="text-sm font-extrabold text-ink font-display uppercase tracking-wider">Helyezések alakulása</h3>
+          <p className="text-[10px] text-faint font-medium mt-0.5">A bajnokság alatti pozícióharcok (1. hely felül, utolsó hely alul)</p>
         </div>
       </div>
 
       {/* Responsive SVG Chart */}
       <div className="relative w-full overflow-x-auto nice-scroll select-none">
         <svg viewBox={`0 0 ${width} ${height}`} className="w-full min-w-[650px] h-auto">
-          {/* Y Grid Lines & Labels */}
-          {yGridValues.map((val) => {
-            const yCoord = getY(val);
+          {/* Y Grid Lines & Labels (Ranks) */}
+          {yGridRanks.map((rank) => {
+            const yCoord = getY(rank);
             return (
-              <g key={val}>
+              <g key={rank}>
                 <line 
                   x1={paddingLeft} 
                   y1={yCoord} 
@@ -168,10 +188,10 @@ export function LeaderboardChart({ profiles, currentUserId }: LeaderboardChartPr
                 <text 
                   x={paddingLeft - 8} 
                   y={yCoord + 3} 
-                  className="font-mono text-[9px] font-bold text-faint tabular-nums"
+                  className={`font-mono text-[9.5px] tabular-nums ${rank === 1 ? 'font-extrabold text-amber-500' : 'font-bold text-faint'}`}
                   textAnchor="end"
                 >
-                  {val}
+                  {rank}.
                 </text>
               </g>
             );
@@ -207,11 +227,11 @@ export function LeaderboardChart({ profiles, currentUserId }: LeaderboardChartPr
             const isSelf = player === currentUsername;
             const color = playerColors[player] || '#cbd5e1';
             
-            // Build SVG path
-            const pathPoints = history.map((point, index) => {
-              const x = getX(index);
-              const y = getY(point[player] || 0);
-              return `${index === 0 ? 'M' : 'L'} ${x} ${y}`;
+            // Build SVG path plotting ranks
+            const pathPoints = rankHistory.map((point) => {
+              const x = getX(point.matchIndex);
+              const y = getY(point.ranks[player] || maxRank);
+              return `${point.matchIndex === 0 ? 'M' : 'L'} ${x} ${y}`;
             }).join(' ');
 
             // Determine rendering weights based on hover
@@ -233,10 +253,11 @@ export function LeaderboardChart({ profiles, currentUserId }: LeaderboardChartPr
               }
             }
 
-            const lastPoint = history[history.length - 1];
-            const lastPointsVal = lastPoint[player] || 0;
-            const lastX = getX(history.length - 1);
-            const lastY = getY(lastPointsVal);
+            const lastPoint = rankHistory[rankHistory.length - 1];
+            const lastRankVal = lastPoint.ranks[player] || maxRank;
+            const lastPointsVal = lastPoint.points[player] || 0;
+            const lastX = getX(rankHistory.length - 1);
+            const lastY = getY(lastRankVal);
 
             return (
               <g 
@@ -286,7 +307,7 @@ export function LeaderboardChart({ profiles, currentUserId }: LeaderboardChartPr
                   fillOpacity={isAnyHovered && !isThisHovered ? 0.35 : 1}
                   className={`text-[9.5px] select-none ${isSelf || isThisHovered ? 'font-extrabold' : 'font-semibold'}`}
                 >
-                  {player} ({lastPointsVal})
+                  {player} ({lastRankVal}. - {lastPointsVal}p)
                 </text>
               </g>
             );
