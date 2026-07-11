@@ -369,7 +369,8 @@ export function LeaderboardChart({ profiles, currentUserId }: LeaderboardChartPr
         {players.map((player) => {
           const color = playerColors[player] || '#cbd5e1';
           const isSelf = player === currentUsername;
-          const isSelected = selectedPlayers.includes(player) || hoveredPlayer === player;
+          const isAnyHighlighted = selectedPlayers.length > 0 || hoveredPlayer !== null;
+          const isSelected = selectedPlayers.includes(player);
 
           // Highlighted border/background style when selected
           const activeStyle = isSelected
@@ -380,8 +381,6 @@ export function LeaderboardChart({ profiles, currentUserId }: LeaderboardChartPr
             <button
               key={player}
               onClick={() => handlePillClick(player)}
-              onMouseEnter={() => setHoveredPlayer(player)}
-              onMouseLeave={() => setHoveredPlayer(null)}
               style={activeStyle}
               className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[10px] font-bold transition-all duration-200 cursor-pointer select-none hover:border-line2 hover:text-ink
                 ${isSelf && !isAnyHighlighted ? 'bg-[#F4F0FE] border-accent/40 text-accent' : ''}`}
