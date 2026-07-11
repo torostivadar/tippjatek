@@ -6,6 +6,7 @@ import { Navigation } from '@/src/components/Navigation';
 import { MatchList } from '@/src/components/MatchList';
 import { MatchDetail } from '@/src/components/MatchDetail';
 import { Leaderboard } from '@/src/components/Leaderboard';
+import { LeaderboardChart } from '@/src/components/LeaderboardChart';
 import { Auth } from '@/src/components/Auth';
 import { Icon } from '@/src/components/Icons';
 import { Rules } from '@/src/components/Rules';
@@ -273,6 +274,7 @@ export default function Home() {
             {/* World Cup Champion Prediction Card has been moved to the Profile Dropdown */}
 
             <Leaderboard profiles={profiles} currentUserId={user.id} />
+            <LeaderboardChart profiles={profiles} currentUserId={user.id} />
           </div>
         )}
 
