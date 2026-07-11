@@ -104,7 +104,7 @@ export function LeaderboardChart({ profiles, currentUserId }: LeaderboardChartPr
     };
   });
 
-  // Predefined beautiful palette for players
+  // Predefined beautiful palette for players when hovered
   const colorPalette = [
     '#3b82f6', // blue
     '#10b981', // green
@@ -122,7 +122,7 @@ export function LeaderboardChart({ profiles, currentUserId }: LeaderboardChartPr
   let paletteIdx = 0;
   players.forEach((player) => {
     if (player === currentUsername) {
-      playerColors[player] = '#7c3aed'; // Highlighted Purple
+      playerColors[player] = '#7c3aed'; // Active user: deep violet
     } else {
       playerColors[player] = colorPalette[paletteIdx % colorPalette.length];
       paletteIdx++;
@@ -140,16 +140,34 @@ export function LeaderboardChart({ profiles, currentUserId }: LeaderboardChartPr
   const chartWidth = width - paddingLeft - paddingRight;
   const chartHeight = height - paddingTop - paddingBottom;
 
-  // X scale: maps matchIndex (0 to totalMatches) to X coordinate
+  // X scale
   const getX = (index: number) => {
     return paddingLeft + (index / totalMatches) * chartWidth;
   };
 
-  // Y scale: maps rank (1 to players.length) to Y coordinate
-  // 1st place is at the top, last place is at the bottom (inverted layout)
+  // Y scale (inverted)
   const maxRank = Math.max(players.length, 2);
   const getY = (rank: number) => {
     return paddingTop + ((rank - 1) / (maxRank - 1)) * chartHeight;
+  };
+
+  // Helper to calculate Y coordinate with parallel offset for ties
+  const getYWithOffset = (player: string, stepIdx: number) => {
+    const rawRank = rankHistory[stepIdx].ranks[player] || maxRank;
+    
+    // Find all players sharing this exact rank at this step
+    const tiedPlayers = players.filter((p) => rankHistory[stepIdx].ranks[p] === rawRank);
+    if (tiedPlayers.length <= 1) {
+      return getY(rawRank);
+    }
+    
+    // Stable sort to ensure lines don't swap parallel tracks mid-air
+    tiedPlayers.sort();
+    
+    const tieIdx = tiedPlayers.indexOf(player);
+    // Offset by a small fraction of a rank unit (e.g. max offset is +/- 0.12 ranks)
+    const offset = (tieIdx - (tiedPlayers.length - 1) / 2) * 0.14;
+    return getY(rawRank + offset);
   };
 
   // Y grid lines represent ranks (1., 2., 3., ... 10.)
@@ -225,31 +243,48 @@ export function LeaderboardChart({ profiles, currentUserId }: LeaderboardChartPr
           {/* Player Lines */}
           {players.map((player) => {
             const isSelf = player === currentUsername;
-            const color = playerColors[player] || '#cbd5e1';
             
-            // Build SVG path plotting ranks
-            const pathPoints = rankHistory.map((point) => {
+            // Build SVG path using Sigmoid curves (Bezier) instead of straight lines
+            let pathPoints = '';
+            rankHistory.forEach((point, stepIdx) => {
               const x = getX(point.matchIndex);
-              const y = getY(point.ranks[player] || maxRank);
-              return `${point.matchIndex === 0 ? 'M' : 'L'} ${x} ${y}`;
-            }).join(' ');
+              const y = getYWithOffset(player, stepIdx);
 
-            // Determine rendering weights based on hover
+              if (stepIdx === 0) {
+                pathPoints = `M ${x} ${y}`;
+              } else {
+                const prevPoint = rankHistory[stepIdx - 1];
+                const prevX = getX(prevPoint.matchIndex);
+                const prevY = getYWithOffset(player, stepIdx - 1);
+                const dx = x - prevX;
+                // Cubic Bezier interpolation: Control points located halfway horizontally
+                pathPoints += ` C ${prevX + dx / 2} ${prevY}, ${x - dx / 2} ${y}, ${x} ${y}`;
+              }
+            });
+
+            // Focus + Context Logic
+            // If hovered over anyone, dim everyone else.
+            // If not hovered, "self" is active purple, others are uniform soft light gray.
             const isAnyHovered = hoveredPlayer !== null;
             const isThisHovered = hoveredPlayer === player;
             
-            let opacity = 0.45;
-            let strokeWidth = 1.5;
+            let color = '#cbd5e1'; // Default: Soft gray for others
+            let opacity = 0.35;
+            let strokeWidth = 1.25;
+
             if (isSelf) {
+              color = '#7c3aed'; // Highlighted Purple
               opacity = 1.0;
               strokeWidth = 3.0;
             }
+
             if (isAnyHovered) {
               if (isThisHovered) {
+                color = playerColors[player] || '#7c3aed';
                 opacity = 1.0;
                 strokeWidth = isSelf ? 4.0 : 2.5;
               } else {
-                opacity = isSelf ? 0.45 : 0.15;
+                opacity = isSelf ? 0.35 : 0.08; // Dim unhovered lines severely
               }
             }
 
@@ -257,7 +292,7 @@ export function LeaderboardChart({ profiles, currentUserId }: LeaderboardChartPr
             const lastRankVal = lastPoint.ranks[player] || maxRank;
             const lastPointsVal = lastPoint.points[player] || 0;
             const lastX = getX(rankHistory.length - 1);
-            const lastY = getY(lastRankVal);
+            const lastY = getYWithOffset(player, rankHistory.length - 1);
 
             return (
               <g 
@@ -279,7 +314,7 @@ export function LeaderboardChart({ profiles, currentUserId }: LeaderboardChartPr
                   />
                 )}
                 
-                {/* Main Line */}
+                {/* Main Line (Sigmoid Path) */}
                 <path 
                   d={pathPoints} 
                   fill="none" 
@@ -303,8 +338,8 @@ export function LeaderboardChart({ profiles, currentUserId }: LeaderboardChartPr
                 <text 
                   x={lastX + 8} 
                   y={lastY + 3.5} 
-                  fill={color} 
-                  fillOpacity={isAnyHovered && !isThisHovered ? 0.35 : 1}
+                  fill={isSelf || isThisHovered ? color : (isAnyHovered ? '#cbd5e1' : '#475569')}
+                  fillOpacity={isAnyHovered && !isThisHovered ? 0.25 : 1}
                   className={`text-[9.5px] select-none ${isSelf || isThisHovered ? 'font-extrabold' : 'font-semibold'}`}
                 >
                   {player} ({lastRankVal}. - {lastPointsVal}p)
