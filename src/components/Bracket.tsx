@@ -147,10 +147,10 @@ export function Bracket({ matches, predictions, onSelectMatch }: BracketProps) {
             {[
               { r16: '89', feed: ['73', '76'], side: 'Bal ág' },
               { r16: '90', feed: ['75', '78'], side: 'Bal ág' },
-              { r16: '91', feed: ['74', '77'], side: 'Bal ág' },
-              { r16: '92', feed: ['79', '80'], side: 'Bal ág' },
-              { r16: '94', feed: ['81', '82'], side: 'Jobb ág' },
-              { r16: '93', feed: ['84', '83'], side: 'Jobb ág' },
+              { r16: '94', feed: ['81', '82'], side: 'Bal ág' },
+              { r16: '93', feed: ['84', '83'], side: 'Bal ág' },
+              { r16: '91', feed: ['74', '77'], side: 'Jobb ág' },
+              { r16: '92', feed: ['79', '80'], side: 'Jobb ág' },
               { r16: '95', feed: ['87', '86'], side: 'Jobb ág' },
               { r16: '96', feed: ['85', '88'], side: 'Jobb ág' }
             ].map((group) => (
@@ -189,8 +189,8 @@ export function Bracket({ matches, predictions, onSelectMatch }: BracketProps) {
             </span>
             {[
               { qf: '97', feed: ['89', '90'], side: 'Bal ág' },
-              { qf: '98', feed: ['91', '92'], side: 'Bal ág' },
-              { qf: '99', feed: ['93', '94'], side: 'Jobb ág' },
+              { qf: '99', feed: ['93', '94'], side: 'Bal ág' },
+              { qf: '98', feed: ['91', '92'], side: 'Jobb ág' },
               { qf: '100', feed: ['95', '96'], side: 'Jobb ág' }
             ].map((group) => (
               <div key={group.qf} className="bg-wash/40 border border-line p-3 rounded-2xl space-y-2">
@@ -265,8 +265,8 @@ export function Bracket({ matches, predictions, onSelectMatch }: BracketProps) {
               {[
                 { top: '73', bottom: '76' },
                 { top: '75', bottom: '78' },
-                { top: '74', bottom: '77' },
-                { top: '79', bottom: '80' }
+                { top: '81', bottom: '82' },
+                { top: '84', bottom: '83' }
               ].map((pair, idx) => (
                 <div key={idx} className="h-[200px] flex flex-col justify-center gap-1.5">
                   {renderMatchCard(pair.top)}
@@ -286,7 +286,7 @@ export function Bracket({ matches, predictions, onSelectMatch }: BracketProps) {
 
             {/* COLUMN 3: LEFT ROUND OF 16 */}
             <div className="h-[800px] flex flex-col justify-between">
-              {['89', '90', '91', '92'].map(id => (
+              {['89', '90', '94', '93'].map(id => (
                 <div key={id} className="h-[200px] flex items-center">
                   {renderMatchCard(id)}
                 </div>
@@ -304,7 +304,7 @@ export function Bracket({ matches, predictions, onSelectMatch }: BracketProps) {
 
             {/* COLUMN 5: LEFT QUARTER-FINALS */}
             <div className="h-[800px] flex flex-col justify-between">
-              {['97', '98'].map(id => (
+              {['97', '99'].map(id => (
                 <div key={id} className="h-[400px] flex items-center">
                   {renderMatchCard(id)}
                 </div>
@@ -379,7 +379,7 @@ export function Bracket({ matches, predictions, onSelectMatch }: BracketProps) {
 
             {/* COLUMN 13: RIGHT QUARTER-FINALS */}
             <div className="h-[800px] flex flex-col justify-between">
-              {['99', '100'].map(id => (
+              {['98', '100'].map(id => (
                 <div key={id} className="h-[400px] flex items-center">
                   {renderMatchCard(id)}
                 </div>
@@ -397,7 +397,7 @@ export function Bracket({ matches, predictions, onSelectMatch }: BracketProps) {
 
             {/* COLUMN 15: RIGHT ROUND OF 16 */}
             <div className="h-[800px] flex flex-col justify-between">
-              {['94', '93', '95', '96'].map(id => (
+              {['91', '92', '95', '96'].map(id => (
                 <div key={id} className="h-[200px] flex items-center">
                   {renderMatchCard(id)}
                 </div>
@@ -416,8 +416,8 @@ export function Bracket({ matches, predictions, onSelectMatch }: BracketProps) {
             {/* COLUMN 17: RIGHT ROUND OF 32 */}
             <div className="h-[800px] flex flex-col justify-between">
               {[
-                { top: '81', bottom: '82' },
-                { top: '84', bottom: '83' },
+                { top: '74', bottom: '77' },
+                { top: '79', bottom: '80' },
                 { top: '87', bottom: '86' },
                 { top: '85', bottom: '88' }
               ].map((pair, idx) => (

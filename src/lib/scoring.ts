@@ -273,9 +273,9 @@ const KNOCKOUT_FLOW = {
 
   // Quarter-finals -> Semi-finals
   '97': { nextMatchId: '101', slot: 'team_a' as const },
-  '98': { nextMatchId: '101', slot: 'team_b' as const },
-  '99': { nextMatchId: '102', slot: 'team_a' as const },
-  '100': { nextMatchId: '102', slot: 'team_b' as const },
+  '99': { nextMatchId: '101', slot: 'team_b' as const },
+  '100': { nextMatchId: '102', slot: 'team_a' as const },
+  '98': { nextMatchId: '102', slot: 'team_b' as const },
 };
 
 async function propagateKnockoutResult(matchId: string, winner: string, loser: string) {
