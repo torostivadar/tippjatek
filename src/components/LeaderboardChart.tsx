@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/src/lib/supabase';
 import { Profile } from '@/src/types';
 import { Icon } from './Icons';
@@ -28,10 +28,21 @@ export function LeaderboardChart({ profiles, currentUserId }: LeaderboardChartPr
   const [players, setPlayers] = useState<string[]>([]);
   const [totalMatches, setTotalMatches] = useState(104);
   const [loading, setLoading] = useState(true);
+  
+  // States for multi-select (click) and temporary highlight (hover)
+  const [selectedPlayers, setSelectedPlayers] = useState<string[]>([]);
   const [hoveredPlayer, setHoveredPlayer] = useState<string | null>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   const currentUserProfile = profiles.find((p) => p.id === currentUserId);
   const currentUsername = currentUserProfile?.username || '';
+
+  // Scroll to the end (right side) on load so users see the current rankings
+  useEffect(() => {
+    if (history.length > 0 && scrollContainerRef.current) {
+      scrollContainerRef.current.scrollLeft = scrollContainerRef.current.scrollWidth;
+    }
+  }, [history]);
 
   useEffect(() => {
     async function fetchHistory() {
@@ -122,18 +133,18 @@ export function LeaderboardChart({ profiles, currentUserId }: LeaderboardChartPr
   let paletteIdx = 0;
   players.forEach((player) => {
     if (player === currentUsername) {
-      playerColors[player] = '#7c3aed'; // Highlighted Purple (Active User)
+      playerColors[player] = '#7c3aed'; // Active User: Purple
     } else {
       playerColors[player] = colorPalette[paletteIdx % colorPalette.length];
       paletteIdx++;
     }
   });
 
-  // Calculate scales (removed paddingRight space since we deleted text labels)
+  // Calculate scales
   const width = 780;
   const height = 380;
   const paddingLeft = 45;
-  const paddingRight = 20; // Minimal padding for endpoint dot
+  const paddingRight = 20;
   const paddingTop = 35;
   const paddingBottom = 40;
 
@@ -145,7 +156,7 @@ export function LeaderboardChart({ profiles, currentUserId }: LeaderboardChartPr
     return paddingLeft + (index / totalMatches) * chartWidth;
   };
 
-  // Y scale (inverted)
+  // Y scale
   const maxRank = Math.max(players.length, 2);
   const getY = (rank: number) => {
     return paddingTop + ((rank - 1) / (maxRank - 1)) * chartHeight;
@@ -170,14 +181,17 @@ export function LeaderboardChart({ profiles, currentUserId }: LeaderboardChartPr
   // Y grid lines represent ranks (1., 2., 3., ... 9.)
   const yGridRanks = Array.from({ length: maxRank }, (_, i) => i + 1);
 
-  // Toggle player selection for pills (Legend)
+  // Toggle selection for a player
   const handlePillClick = (player: string) => {
-    if (hoveredPlayer === player) {
-      setHoveredPlayer(null); // Reset back to normal view
-    } else {
-      setHoveredPlayer(player); // Focus on selected player
-    }
+    setSelectedPlayers((prev) => 
+      prev.includes(player)
+        ? prev.filter((p) => p !== player)
+        : [...prev, player]
+    );
   };
+
+  // Determine if any highlighting is active
+  const isAnyHighlighted = selectedPlayers.length > 0 || hoveredPlayer !== null;
 
   return (
     <div className="rounded-3xl border border-line bg-card overflow-hidden shadow-[0_18px_50px_-24px_rgba(16,24,40,0.30)] p-5 space-y-5">
@@ -192,8 +206,8 @@ export function LeaderboardChart({ profiles, currentUserId }: LeaderboardChartPr
         </div>
       </div>
 
-      {/* Scrollable Container (covers exactly 1/3 of the chart on mobile) */}
-      <div className="relative w-full overflow-x-auto nice-scroll select-none">
+      {/* Scrollable Container */}
+      <div ref={scrollContainerRef} className="relative w-full overflow-x-auto nice-scroll select-none">
         <svg viewBox={`0 0 ${width} ${height}`} className="w-full min-w-[950px] md:min-w-0 h-auto">
           {/* Y Grid Lines & Labels */}
           {yGridRanks.map((rank) => {
@@ -221,7 +235,7 @@ export function LeaderboardChart({ profiles, currentUserId }: LeaderboardChartPr
             );
           })}
 
-          {/* X Grid Lines (Milestones) */}
+          {/* X Grid Lines */}
           {[0, 16, 32, 48, 64, 80, 96, totalMatches].map((idx) => {
             const xCoord = getX(idx);
             return (
@@ -250,7 +264,7 @@ export function LeaderboardChart({ profiles, currentUserId }: LeaderboardChartPr
           {players.map((player) => {
             const isSelf = player === currentUsername;
             
-            // Build SVG path using Sigmoid curves
+            // Build SVG path
             let pathPoints = '';
             rankHistory.forEach((point, stepIdx) => {
               const x = getX(point.matchIndex);
@@ -267,27 +281,36 @@ export function LeaderboardChart({ profiles, currentUserId }: LeaderboardChartPr
               }
             });
 
-            // Focus + Context Logic
-            const isAnyHovered = hoveredPlayer !== null;
-            const isThisHovered = hoveredPlayer === player;
+            // Focus + Context Logic with multi-select support
+            const isHighlighted = selectedPlayers.includes(player) || hoveredPlayer === player;
             
-            let color = '#cbd5e1'; // Soft background gray
-            let opacity = 0.35;
+            let color = '#cbd5e1'; // Faint gray
+            let opacity = 0.50; // default visible gray
             let strokeWidth = 1.25;
 
+            // Highlighted Active User (Self)
             if (isSelf) {
               color = '#7c3aed';
               opacity = 1.0;
               strokeWidth = 3.0;
             }
 
-            if (isAnyHovered) {
-              if (isThisHovered) {
+            if (isAnyHighlighted) {
+              if (isHighlighted) {
                 color = playerColors[player] || '#7c3aed';
                 opacity = 1.0;
                 strokeWidth = isSelf ? 4.0 : 2.5;
               } else {
-                opacity = isSelf ? 0.35 : 0.08;
+                // Not highlighted: dim slightly but keep visible (opacity 0.15)
+                color = '#cbd5e1';
+                opacity = isSelf ? 0.35 : 0.15;
+              }
+            } else {
+              // Default state (no highlighting active at all)
+              if (!isSelf) {
+                // Make the gray lines slightly darker/more visible by default
+                color = '#94a3b8'; // Slate gray
+                opacity = 0.50;
               }
             }
 
@@ -304,7 +327,7 @@ export function LeaderboardChart({ profiles, currentUserId }: LeaderboardChartPr
                 className="cursor-pointer transition-all duration-200"
               >
                 {/* Glow Filter */}
-                {(isSelf || isThisHovered) && (
+                {(isSelf || isHighlighted) && (
                   <path 
                     d={pathPoints} 
                     fill="none" 
@@ -327,11 +350,11 @@ export function LeaderboardChart({ profiles, currentUserId }: LeaderboardChartPr
                   strokeLinejoin="round"
                 />
 
-                {/* Endpoint circle (No labels displayed next to it anymore) */}
+                {/* Endpoint circle */}
                 <circle 
                   cx={lastX} 
                   cy={lastY} 
-                  r={isSelf || isThisHovered ? 4.5 : 3} 
+                  r={isSelf || isHighlighted ? 4.5 : 3} 
                   fill={color} 
                   fillOpacity={opacity}
                 />
@@ -341,16 +364,12 @@ export function LeaderboardChart({ profiles, currentUserId }: LeaderboardChartPr
         </svg>
       </div>
 
-      {/* Interactive Legend (Pills) under the chart */}
+      {/* Interactive Legend (Pills) - Compakt, Name-Only layout */}
       <div className="flex flex-wrap items-center justify-center gap-2 pt-3 border-t border-line">
         {players.map((player) => {
           const color = playerColors[player] || '#cbd5e1';
           const isSelf = player === currentUsername;
-          const isAnyHovered = hoveredPlayer !== null;
-          const isSelected = hoveredPlayer === player;
-          const lastPoint = rankHistory[rankHistory.length - 1];
-          const lastRankVal = lastPoint.ranks[player] || maxRank;
-          const lastPointsVal = lastPoint.points[player] || 0;
+          const isSelected = selectedPlayers.includes(player) || hoveredPlayer === player;
 
           // Highlighted border/background style when selected
           const activeStyle = isSelected
@@ -364,19 +383,16 @@ export function LeaderboardChart({ profiles, currentUserId }: LeaderboardChartPr
               onMouseEnter={() => setHoveredPlayer(player)}
               onMouseLeave={() => setHoveredPlayer(null)}
               style={activeStyle}
-              className={`flex items-center gap-2 px-3 py-1.5 rounded-full border text-[10.5px] font-bold transition-all duration-200 cursor-pointer select-none hover:border-line2 hover:text-ink
-                ${isSelf && !isAnyHovered ? 'bg-[#F4F0FE] border-accent/40 text-accent' : ''}`}
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[10px] font-bold transition-all duration-200 cursor-pointer select-none hover:border-line2 hover:text-ink
+                ${isSelf && !isAnyHighlighted ? 'bg-[#F4F0FE] border-accent/40 text-accent' : ''}`}
             >
               {/* Dot indicator with player color */}
               <span 
-                className="w-2 h-2 rounded-full shrink-0" 
+                className="w-1.5 h-1.5 rounded-full shrink-0" 
                 style={{ backgroundColor: color }}
               />
               <span>
-                {player} {isSelf && '(Én)'}
-              </span>
-              <span className="font-mono text-[9px] text-faint font-semibold tabular-nums border-l border-line pl-1.5 ml-0.5">
-                {lastRankVal}. hely · {lastPointsVal}p
+                {player}
               </span>
             </button>
           );
