@@ -44,6 +44,10 @@ export default function AdminPage() {
   const [teamToEliminate, setTeamToEliminate] = useState('');
   const [loadingEliminated, setLoadingEliminated] = useState(false);
 
+  // Player evaluations state
+  const [generatingEvaluations, setGeneratingEvaluations] = useState(false);
+  const [evaluationsList, setEvaluationsList] = useState<Array<{ username: string; evaluation: string }>>([]);
+
   // 1. Authenticate user
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
@@ -65,8 +69,53 @@ export default function AdminPage() {
     if (user && user.email === 'tools.claudius@gmail.com') {
       fetchMatches();
       fetchEliminatedTeams();
+      fetchPlayerEvaluations();
     }
   }, [user]);
+
+  const fetchPlayerEvaluations = async () => {
+    const { data } = await supabase
+      .from('profiles')
+      .select('username, evaluation')
+      .order('points', { ascending: false });
+    if (data) {
+      setEvaluationsList(data.filter(p => p.evaluation !== null) as any);
+    }
+  };
+
+  const handleGenerateEvaluations = async () => {
+    setGeneratingEvaluations(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+
+      if (!token) {
+        alert('Nincs érvényes munkamenet token!');
+        return;
+      }
+
+      const res = await fetch('/api/admin/generate-evaluations', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Hiba a generálás során');
+      }
+
+      setEvaluationsList(data.evaluations);
+      alert(`Sikeresen legenerálva ${data.count} játékos értékelése!`);
+    } catch (err: any) {
+      console.error(err);
+      alert('Generálási Hiba: ' + err.message);
+    } finally {
+      setGeneratingEvaluations(false);
+    }
+  };
 
   const fetchEliminatedTeams = async () => {
     try {
@@ -597,6 +646,58 @@ export default function AdminPage() {
               </div>
             </div>
           </div>
+        </div>
+
+        {/* PLAYER EVALUATIONS SECTION */}
+        <div className="mt-8 rounded-3xl border border-line bg-card p-6 shadow-sm">
+          <div className="pb-3 border-b border-line flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <h3 className="font-bold font-display text-[17px] text-ink flex items-center gap-2">
+                <Icon name="sparkles" size={18} className="text-accent animate-pulse" />
+                Záró Játékos-Kiértékelések Generálása (Záró Ajándék)
+              </h3>
+              <p className="text-xs text-faint mt-1">
+                A döntő lezárulta után ezzel a gombbal indíthatod el a játékosok egyedi, Claudius-féle elemzésének generálását.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={handleGenerateEvaluations}
+              disabled={generatingEvaluations}
+              className="px-5 py-3 rounded-2xl bg-accent text-white font-bold text-xs uppercase tracking-wider flex items-center gap-2 hover:brightness-105 transition-all shadow-[0_10px_20px_-10px_rgba(124,58,237,0.5)] disabled:opacity-50 disabled:shadow-none cursor-pointer"
+            >
+              {generatingEvaluations ? (
+                <>
+                  <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                  Generálás folyamatban (15-30 mp)...
+                </>
+              ) : (
+                <>Elemzések Generálása <Icon name="sparkles" size={14} /></>
+              )}
+            </button>
+          </div>
+
+          {evaluationsList.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+              {evaluationsList.map((item, idx) => (
+                <div key={item.username} className="p-4 bg-wash border border-line rounded-2xl flex flex-col justify-between">
+                  <div>
+                    <div className="flex items-center justify-between pb-2 border-b border-line mb-3">
+                      <span className="font-bold text-xs text-accent">#{idx + 1} {item.username}</span>
+                      <span className="text-[10px] bg-white border border-line px-2 py-0.5 rounded-full text-mid font-bold">Aktív kiértékelés</span>
+                    </div>
+                    <p className="text-xs text-mid leading-relaxed italic">
+                      &ldquo;{item.evaluation}&rdquo;
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-8 text-faint italic text-xs bg-wash border border-dashed border-line rounded-2xl mt-6">
+              Még nincsenek legenerált kiértékelések. Kattints a fenti gombra az elindításhoz!
+            </div>
+          )}
         </div>
       </main>
     </div>
