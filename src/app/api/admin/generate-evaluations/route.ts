@@ -16,7 +16,7 @@ async function callGeminiWithRetry(prompt: string, retries = 3, initialDelay = 2
   for (let i = 0; i < retries; i++) {
     try {
       return await genAI.models.generateContent({
-        model: 'gemini-2.0-flash',
+        model: 'gemini-2.5-flash',
         contents: prompt,
         config: {
           temperature: 0.7,
