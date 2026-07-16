@@ -46,7 +46,9 @@ export default function AdminPage() {
 
   // Player evaluations state
   const [generatingEvaluations, setGeneratingEvaluations] = useState(false);
-  const [evaluationsList, setEvaluationsList] = useState<Array<{ username: string; evaluation: string }>>([]);
+  const [evaluationsList, setEvaluationsList] = useState<Array<{ id: string; username: string; evaluation: string; evaluation_published: boolean }>>([]);
+  const [editedTexts, setEditedTexts] = useState<Record<string, string>>({});
+  const [savingIds, setSavingIds] = useState<Record<string, boolean>>({});
 
   // 1. Authenticate user
   useEffect(() => {
@@ -76,10 +78,16 @@ export default function AdminPage() {
   const fetchPlayerEvaluations = async () => {
     const { data } = await supabase
       .from('profiles')
-      .select('username, evaluation')
+      .select('id, username, evaluation, evaluation_published')
       .order('points', { ascending: false });
     if (data) {
-      setEvaluationsList(data.filter(p => p.evaluation !== null) as any);
+      const filtered = data.filter(p => p.evaluation !== null) as any[];
+      setEvaluationsList(filtered);
+      const texts: Record<string, string> = {};
+      filtered.forEach(p => {
+        texts[p.id] = p.evaluation || '';
+      });
+      setEditedTexts(texts);
     }
   };
 
@@ -108,12 +116,64 @@ export default function AdminPage() {
       }
 
       setEvaluationsList(data.evaluations);
+      const texts: Record<string, string> = {};
+      data.evaluations.forEach((p: any) => {
+        texts[p.id] = p.evaluation || '';
+      });
+      setEditedTexts(texts);
       alert(`Sikeresen legenerálva ${data.count} játékos értékelése!`);
     } catch (err: any) {
       console.error(err);
       alert('Generálási Hiba: ' + err.message);
     } finally {
       setGeneratingEvaluations(false);
+    }
+  };
+
+  const handleSaveEvaluation = async (userId: string, published: boolean) => {
+    setSavingIds(prev => ({ ...prev, [userId]: true }));
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+
+      if (!token) {
+        alert('Nincs érvényes munkamenet token!');
+        return;
+      }
+
+      const evaluationText = editedTexts[userId] || '';
+
+      const res = await fetch('/api/admin/save-evaluation', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          userId,
+          evaluation: evaluationText,
+          published
+        })
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Mentési hiba');
+      }
+
+      // Update local state item
+      setEvaluationsList(prev => prev.map(p => p.id === userId ? {
+        ...p,
+        evaluation: evaluationText,
+        evaluation_published: published
+      } : p));
+
+      alert(published ? 'Mentve és publikálva! A játékos most már látja a levelét.' : 'Mentve piszkozatként (nem publikus).');
+    } catch (err: any) {
+      console.error(err);
+      alert('Mentési hiba: ' + err.message);
+    } finally {
+      setSavingIds(prev => ({ ...prev, [userId]: false }));
     }
   };
 
@@ -678,20 +738,63 @@ export default function AdminPage() {
           </div>
 
           {evaluationsList.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
-              {evaluationsList.map((item, idx) => (
-                <div key={item.username} className="p-4 bg-wash border border-line rounded-2xl flex flex-col justify-between">
-                  <div>
-                    <div className="flex items-center justify-between pb-2 border-b border-line mb-3">
-                      <span className="font-bold text-xs text-accent">#{idx + 1} {item.username}</span>
-                      <span className="text-[10px] bg-white border border-line px-2 py-0.5 rounded-full text-mid font-bold">Aktív kiértékelés</span>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+              {evaluationsList.map((item, idx) => {
+                const isSaving = savingIds[item.id] || false;
+                const isPublished = item.evaluation_published;
+
+                return (
+                  <div key={item.id} className="p-5 bg-wash border border-line rounded-2xl flex flex-col justify-between gap-4 shadow-sm">
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between pb-2 border-b border-line">
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-[13px] text-accent">#{idx + 1} {item.username}</span>
+                        </div>
+                        {isPublished ? (
+                          <span className="text-[9px] bg-emerald-100 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">
+                            Publikálva
+                          </span>
+                        ) : (
+                          <span className="text-[9px] bg-slate-200 text-slate-600 border border-slate-300 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">
+                            Piszkozat
+                          </span>
+                        )}
+                      </div>
+                      
+                      <textarea
+                        value={editedTexts[item.id] ?? ''}
+                        onChange={(e) => setEditedTexts(prev => ({ ...prev, [item.id]: e.target.value }))}
+                        className="w-full p-3 bg-white border border-line2 rounded-xl text-xs leading-relaxed focus:outline-none focus:border-accent min-h-[160px] font-sans"
+                        placeholder="Írd ide az értékelés szövegét..."
+                        disabled={isSaving}
+                      />
                     </div>
-                    <p className="text-xs text-mid leading-relaxed italic">
-                      &ldquo;{item.evaluation}&rdquo;
-                    </p>
+
+                    <div className="flex items-center justify-end gap-2 pt-2 border-t border-line">
+                      <button
+                        type="button"
+                        onClick={() => handleSaveEvaluation(item.id, false)}
+                        disabled={isSaving}
+                        className="px-3 py-2 border border-line2 bg-white text-mid hover:text-ink hover:border-line font-bold text-[10px] uppercase tracking-wider rounded-xl transition-all disabled:opacity-50 cursor-pointer"
+                      >
+                        Piszkozatként mentés
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleSaveEvaluation(item.id, true)}
+                        disabled={isSaving}
+                        className="px-4 py-2 bg-accent text-white font-bold text-[10px] uppercase tracking-wider rounded-xl hover:brightness-105 transition-all shadow-[0_4px_12px_-4px_rgba(124,58,237,0.4)] disabled:opacity-50 disabled:shadow-none cursor-pointer flex items-center gap-1.5"
+                      >
+                        {isSaving ? (
+                          <span className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                        ) : (
+                          <>Mentés & Publikálás <Icon name="save" size={12} /></>
+                        )}
+                      </button>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           ) : (
             <div className="text-center py-8 text-faint italic text-xs bg-wash border border-dashed border-line rounded-2xl mt-6">

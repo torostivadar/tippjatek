@@ -77,7 +77,7 @@ export async function POST(req: NextRequest) {
 
     console.log(`Starting evaluations generation for ${allProfiles.length} profiles...`);
 
-    const results: Array<{ username: string; evaluation: string }> = [];
+    const results: Array<{ id: string; username: string; evaluation: string; evaluation_published: boolean }> = [];
 
     // 3. For each player, calculate stats and call Gemini
     for (const player of allProfiles) {
@@ -266,10 +266,18 @@ A válaszod KIZÁRÓLAG a legenerált magyar szöveg legyen, ne használj semmil
 
       // F. Save to Database
       await db.update(profiles)
-        .set({ evaluation: evaluationText })
+        .set({ 
+          evaluation: evaluationText,
+          evaluation_published: false
+        })
         .where(eq(profiles.id, player.id));
 
-      results.push({ username: player.username, evaluation: evaluationText });
+      results.push({ 
+        id: player.id, 
+        username: player.username, 
+        evaluation: evaluationText, 
+        evaluation_published: false 
+      });
 
       // Small delay between calls to avoid API congestion
       await new Promise(resolve => setTimeout(resolve, 300));

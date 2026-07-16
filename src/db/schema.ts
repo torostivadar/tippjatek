@@ -15,6 +15,7 @@ export const profiles = pgTable('profiles', {
   crossroads_bonus: integer('crossroads_bonus').default(0).notNull(), // Bonus/penalty points from crossroads choice (-30 or +30)
   avatar: text('avatar'), // Chosen animal emoji avatar
   evaluation: text('evaluation'), // Pre-generated end of tournament evaluation
+  evaluation_published: boolean('evaluation_published').default(false).notNull(), // Has the admin reviewed and published the evaluation?
   created_at: timestamp('created_at').defaultNow().notNull(),
 });
 
