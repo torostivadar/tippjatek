@@ -154,7 +154,7 @@ export function EvaluationModal({ profile, rank, onClose }: EvaluationModalProps
           <div 
             className={`relative w-28 h-28 rounded-full border-[6px] border-white flex items-center justify-center text-5xl bg-gradient-to-tr from-accent/10 to-accent/20 z-10 ${glowClass}`}
           >
-            {profile.avatar || '🤖'}
+            {profile.avatar || '⚽'}
           </div>
         </div>
 
