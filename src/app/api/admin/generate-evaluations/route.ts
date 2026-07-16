@@ -89,13 +89,26 @@ export async function POST(req: NextRequest) {
 
       console.log(`Compiling stats for ${player.username}...`);
 
-      // A. Missed predictions
+      // A. Missed predictions & Late joining
       const playerPreds = allPredictions.filter(p => p.user_id === player.id);
       const playerPredMatchIds = new Set(playerPreds.map(p => p.match_id));
       
+      // Calculate first prediction match to see if they joined late
+      const playerPredsForFinished = playerPreds.filter(p => finishedMatches.some(m => m.id === p.match_id));
+      const firstPredictionMatch = playerPredsForFinished.length > 0 
+        ? Math.min(...playerPredsForFinished.map(p => {
+            const m = finishedMatches.find(match => match.id === p.match_id);
+            return m ? Number(m.id) : 999;
+          }))
+        : 999;
+
+      const joinedLate = firstPredictionMatch > 12; // Joined after match 12 (group stage already running)
+
       const missedList = finishedMatches.filter(m => !playerPredMatchIds.has(m.id));
-      const missedCount = missedList.length;
-      const missedNames = missedList
+      // If joined late, count missed predictions only AFTER their first prediction!
+      const missedAfterJoin = finishedMatches.filter(m => Number(m.id) >= firstPredictionMatch && !playerPredMatchIds.has(m.id));
+      const missedCount = joinedLate ? missedAfterJoin.length : missedList.length;
+      const missedNames = (joinedLate ? missedAfterJoin : missedList)
         .slice(0, 5)
         .map(m => `${m.team_a} - ${m.team_b}`)
         .join(', ') + (missedCount > 5 ? ' és továbbiak' : '');
@@ -222,6 +235,12 @@ export async function POST(req: NextRequest) {
       const rivalsText = sortedRivals.slice(0, 2).map(([name, count]) => `${name} (${count} meccsen át)`).join(' és ');
 
       // D. Construct Prompt
+      const originalFav = player.original_favorite_team || player.favorite_team || 'nincs megadva';
+      const hasTransferredReal = player.has_transferred && 
+        player.original_favorite_team && 
+        player.favorite_team && 
+        player.original_favorite_team !== player.favorite_team;
+
       const statsPrompt = `Te vagy Claudius, a tippjáték barátságos, kissé csipkelődő és humoros AI kabalája/arca.
 Írj egy egyedi, 10-15 mondatos torna-értékelést a következő játékosról: ${player.username}.
 
@@ -230,15 +249,21 @@ Itt vannak a játékos pontos statisztikái a tornáról:
 - Legjobb helyezés a ranglistán: #${bestRank}.
 - Legrosszabb helyezés a ranglistán: #${worstRank}.
 - Összes tippje: ${playerPreds.length} leadott tipp a 104 meccsből.
-- Kihagyott (nem megtippelt) meccsek száma: ${missedCount} meccs.
+${joinedLate 
+  ? `- Csatlakozás: Később csatlakozott a játékhoz (az első tippjét a(z) ${firstPredictionMatch}. meccsnél adta le). Emiatt a torna elejéről nincsenek tippjei, ami nem hanyagság, hanem későbbi regisztráció! A csatlakozása óta eltelt időben kihagyott tippjeinek száma: ${missedCount} meccs.`
+  : `- Kihagyott (nem megtippelt) meccsek száma: ${missedCount} meccs.`
+}
 ${missedCount > 0 ? `A kihagyott meccsek listája: ${missedNames}.` : ''}
 - Telitalálatok száma: ${exactHits} meccs.
 - Kimenetel-találatok száma: ${outcomeHits} meccs.
 - Téves tippek száma: ${wrongPredictions} meccs.
 - Tuti tippek száma: ${tutiTotal} tipp, ebből telitalálat: ${tutiExact}, csak kimenetel: ${tutiOutcome}, bukott Tuti (amiért -30 pont járt): ${tutiWrong}.
-- Kedvenc csapat a torna elején: ${player.original_favorite_team || 'nincs megadva'}.
+- Kedvenc csapat a torna elején: ${originalFav}.
 - Aktuális kedvenc csapat a torna végén: ${player.favorite_team || 'nincs megadva'}.
-${player.has_transferred ? `A Crossroads-nál megváltoztatta a kedvencét ${player.original_favorite_team}-ról ${player.favorite_team}-ra.` : ''}
+${hasTransferredReal 
+  ? `A Crossroads-nál megváltoztatta a kedvencét ${player.original_favorite_team}-ról ${player.favorite_team}-ra.` 
+  : `A Crossroads-nál nem változtatott kedvenc csapatot (vagy ugyanazt a csapatot választotta újra).`
+}
 - Világbajnok tippje a torna előtt: ${player.champion_prediction || 'nincs megadva'}.
 - Legfőbb vetélytársak a tabellán (akikkel a legtöbb meccset töltötte közvetlen szomszédként): ${rivalsText || 'nincsenek'}.
 
