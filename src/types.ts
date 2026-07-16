@@ -64,6 +64,8 @@ export interface Profile {
   has_transferred: boolean;
   crossroads_bonus: number;
   avatar?: string | null;
+  evaluation?: string | null;
+  evaluation_published?: boolean;
 }
 
 export interface MatchStats {

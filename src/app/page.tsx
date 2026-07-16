@@ -12,6 +12,7 @@ import { Icon } from '@/src/components/Icons';
 import { Rules } from '@/src/components/Rules';
 import { CrossroadsModal } from '@/src/components/CrossroadsModal';
 import { Groups } from '@/src/components/Groups';
+import { EvaluationModal } from '@/src/components/EvaluationModal';
 import { TeamProfile } from '@/src/components/TeamProfile';
 import { Bracket } from '@/src/components/Bracket';
 
@@ -53,6 +54,7 @@ export default function Home() {
   const [selectedTeamId, setSelectedTeamId] = useState<string | null>(null);
   const [mobileDetailOpen, setMobileDetailOpen] = useState(false);
   const [highlightedGroup, setHighlightedGroup] = useState<string | null>(null);
+  const [evaluationModalOpen, setEvaluationModalOpen] = useState(false);
 
   const handleSelectGroup = (groupLetterOrStage: string) => {
     if (groupLetterOrStage && groupLetterOrStage.length === 1 && groupLetterOrStage >= 'A' && groupLetterOrStage <= 'L') {
@@ -80,6 +82,21 @@ export default function Home() {
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' });
   }, [activeTab]);
+
+  // Trigger evaluation modal if present and published (once per user session)
+  useEffect(() => {
+    if (user && profiles.length > 0) {
+      const profile = profiles.find(p => p.id === user.id);
+      if (profile?.evaluation && profile?.evaluation_published) {
+        const seenKey = `tippjatek_evaluation_seen_${user.id}`;
+        const alreadySeen = localStorage.getItem(seenKey);
+        if (!alreadySeen) {
+          setEvaluationModalOpen(true);
+          localStorage.setItem(seenKey, 'true');
+        }
+      }
+    }
+  }, [user, profiles]);
 
   const currentProfile = profiles.find(p => p.id === user?.id);
   const showFavoritePrompt = user && currentProfile && !currentProfile.favorite_team;
@@ -273,6 +290,25 @@ export default function Home() {
           <div className="space-y-6">
             {/* World Cup Champion Prediction Card has been moved to the Profile Dropdown */}
 
+            {/* Claudius personal evaluation letter banner */}
+            {currentProfile?.evaluation && currentProfile?.evaluation_published && (
+              <div className="p-4 rounded-3xl border border-accent/20 bg-accent/5 flex items-center justify-between gap-4 shadow-sm animate-in fade-in slide-in-from-top-4 duration-300">
+                <div className="flex items-center gap-3">
+                  <span className="text-3xl animate-bounce">✉️</span>
+                  <div>
+                    <h4 className="text-xs font-extrabold text-accent uppercase tracking-wider">Claudius levele megérkezett!</h4>
+                    <p className="text-[11px] text-mid mt-0.5">Olvasd el Claudius személyre szabott torna-kiértékelését.</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setEvaluationModalOpen(true)}
+                  className="px-3.5 py-2 bg-accent text-white font-bold text-[10px] uppercase tracking-wider rounded-xl hover:brightness-105 active:scale-95 transition-all shadow-[0_4px_12px_-4px_rgba(124,58,237,0.4)] cursor-pointer"
+                >
+                  Megnyitás
+                </button>
+              </div>
+            )}
+
             <Leaderboard profiles={profiles} currentUserId={user.id} />
             <LeaderboardChart profiles={profiles} currentUserId={user.id} />
           </div>
@@ -365,6 +401,14 @@ export default function Home() {
             setMobileDetailOpen(true);
           }}
           onSelectGroup={handleSelectGroup}
+        />
+      )}
+
+      {evaluationModalOpen && currentProfile && (
+        <EvaluationModal 
+          profile={currentProfile}
+          rank={profiles.findIndex(p => p.id === user?.id) + 1}
+          onClose={() => setEvaluationModalOpen(false)}
         />
       )}
     </div>
